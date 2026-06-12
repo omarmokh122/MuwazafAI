@@ -5,29 +5,35 @@ export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qzwxecrvtbynumi.supabase.co'
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key-to-prevent-crash'
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/["']/g, "")
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.replace(/["']/g, "")
 
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseKey,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-            supabaseResponse = NextResponse.next({ request })
-            cookiesToSet.forEach(({ name, value, options }) =>
-              supabaseResponse.cookies.set(name, value, options)
-            )
-          },
-        },
-      }
-    )
+    let user = null;
 
-    const { data: { user } } = await supabase.auth.getUser()
+    if (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http')) {
+      const supabase = createServerClient(
+        supabaseUrl,
+        supabaseKey,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll()
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+              supabaseResponse = NextResponse.next({ request })
+              cookiesToSet.forEach(({ name, value, options }) =>
+                supabaseResponse.cookies.set(name, value, options)
+              )
+            },
+          },
+        }
+      )
+      const { data } = await supabase.auth.getUser()
+      user = data.user
+    } else {
+      console.log('Skipping Supabase auth in proxy: Missing or invalid environment variables.')
+    }
 
     const { pathname } = request.nextUrl
     const protectedRoutes = ['/dashboard', '/scout', '/coach', '/simulation', '/application', '/rights', '/benchmark', '/resources', '/profile']
@@ -47,8 +53,8 @@ export async function proxy(request: NextRequest) {
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
-  } catch (error) {
-    console.error('Middleware error:', error)
+  } catch (error: any) {
+    console.log('Middleware error:', error?.message)
   }
 
   return supabaseResponse
