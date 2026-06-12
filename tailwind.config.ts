@@ -11,11 +11,22 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "Fira Code", "monospace"],
+        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        display: ["var(--font-inter)", "system-ui", "sans-serif"],
+        mono: ["var(--font-space-mono)", "JetBrains Mono", "Fira Code", "monospace"],
       },
       colors: {
+        // ElevenLabs Design System Colors
+        'el-white': '#ffffff',
+        'el-light-gray': '#f5f5f5',
+        'el-warm-stone': '#f5f2ef',
+        'el-black': '#000000',
+        'el-dark-gray': '#4e4e4e',
+        'el-warm-gray': '#777169',
+        'el-near-white': '#f6f6f6',
+        'el-border-light': '#e5e5e5',
+        
+        // Keep existing colors for dashboard components
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -74,6 +85,17 @@ const config: Config = {
           900: "#18181b",
           950: "#09090b",
         },
+      },
+      boxShadow: {
+        'el-inset-edge': 'rgba(0,0,0,0.075) 0px 0px 0px 0.5px inset',
+        'el-inset-dark': 'rgba(0,0,0,0.1) 0px 0px 0px 0.5px inset',
+        'el-outline-ring': 'rgba(0,0,0,0.06) 0px 0px 0px 1px',
+        'el-soft-elevation': 'rgba(0,0,0,0.04) 0px 4px 4px',
+        'el-card': 'rgba(0,0,0,0.4) 0px 0px 1px, rgba(0,0,0,0.04) 0px 4px 4px',
+        'el-warm-lift': 'rgba(78,50,23,0.04) 0px 6px 16px',
+        'el-edge': 'rgba(0,0,0,0.08) 0px 0px 0px 0.5px',
+        'el-inset-ring': 'rgba(0,0,0,0.1) 0px 0px 0px 1px inset',
+        'el-card-full': 'rgba(0,0,0,0.06) 0px 0px 0px 1px, rgba(0,0,0,0.04) 0px 1px 2px, rgba(0,0,0,0.04) 0px 2px 4px',
       },
       borderRadius: {
         lg: "var(--radius)",

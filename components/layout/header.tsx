@@ -33,14 +33,14 @@ export function Header() {
   }, [])
 
   return (
-    <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-10">
+    <header className="h-16 shadow-[rgba(0,0,0,0.06)_0px_1px_0px_0px] bg-el-white flex items-center justify-between px-6 sticky top-0 z-10">
       <div className="flex-1 max-w-md">
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input 
             type="search" 
             placeholder="Search tools, resources, or history..." 
-            className="w-full bg-zinc-50 pl-9 border border-zinc-200 focus-visible:ring-1 focus-visible:ring-cyan-500"
+            className="w-full bg-el-white text-[15px] text-el-black pl-9 border-none shadow-el-inset-dark rounded-[12px] focus-visible:ring-1 focus-visible:ring-blue-300"
           />
         </div>
       </div>

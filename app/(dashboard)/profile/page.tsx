@@ -71,6 +71,45 @@ export default function ProfilePage() {
 
       <div className="grid md:grid-cols-3 gap-8">
         
+        {/* Profile Info Section */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Details</CardTitle>
+              <CardDescription>Your personal information and career goals.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Full Name</label>
+                <input type="text" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500" defaultValue="Guest User" placeholder="e.g. John Doe" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Current Position</label>
+                <input type="text" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500" placeholder="e.g. Software Engineer" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Target Role</label>
+                <input type="text" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500" placeholder="e.g. Senior Frontend Developer" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Industry</label>
+                <input type="text" className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500" placeholder="e.g. Technology" />
+              </div>
+              <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white mt-4">Save Changes</Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-slate-50 border-none shadow-inner">
+            <CardContent className="p-6">
+              <Shield className="w-8 h-8 text-slate-400 mb-4" />
+              <h3 className="font-bold text-slate-800 mb-2">Privacy & Security</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Your uploaded resume is parsed securely. The text is stored entirely locally on your device using your browser's persistent storage.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* CV Upload Section */}
         <div className="md:col-span-2 space-y-6">
           <Card>
@@ -98,7 +137,7 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div 
-                  className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${isDragging ? 'border-violet-500 bg-violet-50' : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50'}`}
+                  className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors cursor-pointer ${isDragging ? 'border-violet-500 bg-violet-50' : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50'}`}
                   onDragOver={onDragOver}
                   onDragLeave={onDragLeave}
                   onDrop={onDrop}
@@ -126,20 +165,6 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Sidebar Info */}
-        <div className="space-y-6">
-          <Card className="bg-slate-50 border-none shadow-inner">
-            <CardContent className="p-6">
-              <Shield className="w-8 h-8 text-slate-400 mb-4" />
-              <h3 className="font-bold text-slate-800 mb-2">Privacy & Security</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Your uploaded resume is parsed securely. The text is stored entirely locally on your device using your browser's persistent storage. We never store your raw files on our servers.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
       </div>
     </div>
   )

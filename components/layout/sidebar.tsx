@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Brain, LayoutDashboard, FileSearch, Target, PlayCircle, Briefcase, Scale, FolderOpen, LogOut, ListTodo } from 'lucide-react'
+import { Brain, LayoutDashboard, FileSearch, Target, PlayCircle, Briefcase, Scale, FolderOpen, LogOut, ListTodo, LineChart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { Logo } from '@/components/ui/logo'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -16,7 +17,7 @@ const navItems = [
   { name: 'Role Skillsets', href: '/skillsets', icon: PlayCircle },
   { name: 'Cover Letters', href: '/application', icon: Briefcase },
   { name: 'Labor Rights', href: '/rights', icon: Scale },
-  { name: 'Salary Data', href: '/benchmark', icon: Brain },
+  { name: 'Salary Benchmark', href: '/benchmark', icon: LineChart },
   { name: 'Resources', href: '/resources', icon: FolderOpen },
 ]
 
@@ -32,13 +33,13 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r border-zinc-200 bg-white text-zinc-900">
-      <div className="flex h-16 items-center px-6 border-b border-zinc-200">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-cyan-600 flex items-center justify-center">
-            <Brain className="h-5 w-5 text-white" />
+    <div className="flex h-screen w-64 flex-col bg-el-white text-el-black shadow-[rgba(0,0,0,0.06)_1px_0px_0px_0px]">
+      <div className="flex h-16 items-center px-6 shadow-[rgba(0,0,0,0.06)_0px_1px_0px_0px]">
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="h-8 w-8 flex items-center justify-center shadow-el-inset-edge">
+            <Logo />
           </div>
-          <span className="text-xl font-bold tracking-tight text-zinc-900">Muwaazaf</span>
+          <span className="text-[17px] font-medium tracking-tight text-el-black">Muwaazaf</span>
         </Link>
       </div>
 
@@ -50,26 +51,26 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "group flex items-center gap-3 rounded-[6px] px-3 py-2 text-[14px] font-medium transition-colors",
                 isActive 
-                  ? "bg-cyan-50 text-cyan-700" 
-                  : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                  ? "bg-el-near-white text-el-black shadow-el-inset-edge" 
+                  : "text-el-dark-gray hover:bg-el-near-white/50 hover:text-el-black"
               )}
             >
-              <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-cyan-600" : "text-zinc-400 group-hover:text-zinc-600")} />
+              <item.icon className={cn("h-[18px] w-[18px] flex-shrink-0", isActive ? "text-el-black" : "text-el-warm-gray group-hover:text-el-black")} />
               {item.name}
             </Link>
           )
         })}
       </nav>
 
-      <div className="border-t border-zinc-200 p-4">
+      <div className="shadow-[rgba(0,0,0,0.06)_0px_-1px_0px_0px] p-4">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50"
+          className="w-full justify-start text-el-dark-gray hover:text-el-black hover:bg-el-near-white rounded-[6px] text-[14px] font-medium"
           onClick={handleLogout}
         >
-          <LogOut className="mr-3 h-5 w-5" />
+          <LogOut className="mr-3 h-[18px] w-[18px]" />
           Sign out
         </Button>
       </div>

@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useInterviewStore } from '@/lib/store/interview-store'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { FileText, Loader2, Wand2, Briefcase, Copy, Download, UserCircle, CheckCircle2 } from 'lucide-react'
+import { FileText, Loader2, Wand2, Briefcase, Copy, Download, UserCircle, CheckCircle2, UploadCloud } from 'lucide-react'
 
 const TONES = ['Professional', 'Creative', 'Highly Technical', 'Aggressive / Confident']
 
@@ -21,6 +21,18 @@ export default function CoverLetterPage() {
   const [coverLetter, setCoverLetter] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const jobFileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleJobFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setLocalJobText(event.target?.result as string || '')
+    }
+    reader.readAsText(file)
+  }
 
   const generateLetter = async () => {
     if (!cvText) {
@@ -64,47 +76,47 @@ export default function CoverLetterPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-12">
+    <div className="flex-1 flex flex-col space-y-4 animate-fade-in w-full pb-4">
       
       {/* Header */}
-      <div className="flex items-center gap-4 border-b pb-6">
-        <div className="p-3 bg-fuchsia-600 text-white rounded-xl shadow-lg shadow-fuchsia-200">
-          <Briefcase className="h-7 w-7" />
+      <div className="flex items-center gap-4 border-b pb-4 shrink-0">
+        <div className="p-2 bg-slate-900 text-white rounded-xl shadow-sm">
+          <Briefcase className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Cover Letter AI</h1>
-          <p className="text-slate-500">Generate highly-targeted cover letters based on your uploaded CV.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Cover Letter AI</h1>
+          <p className="text-sm text-slate-500 mt-1">Generate highly-targeted cover letters based on your uploaded CV.</p>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid lg:grid-cols-2 gap-6 flex-1 min-h-0">
         
         {/* Left Col: Inputs */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>1. Your Resume</CardTitle>
-              <CardDescription>We will use the CV you uploaded to your profile.</CardDescription>
+        <div className="flex flex-col min-h-0 h-full overflow-y-auto pr-2 space-y-3 pb-2">
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-3 pb-2">
+              <CardTitle className="text-base text-slate-800">1. Your Resume</CardTitle>
+              <CardDescription className="text-xs">We will use the CV you uploaded to your profile.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 pt-3">
               {cvText ? (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-6 h-6 text-emerald-600" />
+                    <FileText className="w-6 h-6 text-slate-700" />
                     <div>
-                      <p className="font-semibold text-emerald-800 text-sm">Active Resume Ready</p>
-                      <p className="text-xs text-emerald-600">{cvFileName || 'Uploaded via matcher'}</p>
+                      <p className="font-semibold text-slate-800 text-sm">Active Resume Ready</p>
+                      <p className="text-xs text-slate-500">{cvFileName || 'Uploaded via matcher'}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => router.push('/profile')} className="text-emerald-700 hover:bg-emerald-100">
+                  <Button variant="ghost" size="sm" onClick={() => router.push('/profile')} className="text-slate-600 hover:bg-slate-100 border border-slate-200 bg-white">
                     Change
                   </Button>
                 </div>
               ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-                  <UserCircle className="w-10 h-10 mx-auto text-amber-500 mb-2" />
-                  <p className="font-semibold text-amber-800 mb-4">No CV Found</p>
-                  <Button onClick={() => router.push('/profile')} className="bg-amber-600 hover:bg-amber-700">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
+                  <UserCircle className="w-10 h-10 mx-auto text-slate-400 mb-2" />
+                  <p className="font-semibold text-slate-700 mb-3 text-sm">No CV Found</p>
+                  <Button size="sm" onClick={() => router.push('/profile')} className="bg-slate-900 hover:bg-slate-800 text-white">
                     Upload CV in Profile
                   </Button>
                 </div>
@@ -112,30 +124,52 @@ export default function CoverLetterPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>2. The Job Description</CardTitle>
-              <CardDescription>Paste the target JD so the AI can tailor your letter.</CardDescription>
+          <Card className="border-slate-200 shadow-sm shrink-0">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-3 pb-2">
+              <CardTitle className="text-base text-slate-800">2. Job & Tone</CardTitle>
+              <CardDescription className="text-xs">Paste the target JD so the AI can tailor your letter.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea 
-                placeholder="Paste the job description here..."
-                className="min-h-[200px]"
-                value={localJobText}
-                onChange={(e) => setLocalJobText(e.target.value)}
-              />
+            <CardContent className="space-y-3 p-3">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-700 block">Job Description</label>
+                  <div>
+                    <input 
+                      type="file" 
+                      accept=".txt,.pdf,.doc,.docx" 
+                      className="hidden" 
+                      ref={jobFileInputRef}
+                      onChange={handleJobFileUpload}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => jobFileInputRef.current?.click()}
+                      className="h-8 text-xs bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5 mr-1.5" /> Upload File
+                    </Button>
+                  </div>
+                </div>
+                <Textarea 
+                  placeholder="Paste the job description here..."
+                  className="h-20 min-h-0 bg-slate-50/50 border-slate-200 focus-visible:ring-slate-400 text-xs"
+                  value={localJobText}
+                  onChange={(e) => setLocalJobText(e.target.value)}
+                />
+              </div>
               
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">3. Select Tone</label>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-slate-700 block">3. Select Tone</label>
+                <div className="flex flex-wrap gap-2.5">
                   {TONES.map(tone => (
                     <button
                       key={tone}
                       onClick={() => setSelectedTone(tone)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
                         selectedTone === tone 
-                          ? 'bg-fuchsia-600 text-white shadow-md' 
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-slate-900'
                       }`}
                     >
                       {tone}
@@ -144,12 +178,12 @@ export default function CoverLetterPage() {
                 </div>
               </div>
 
-              {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+              {error && <p className="text-red-600 mt-3 font-medium bg-red-50 border border-red-100 inline-block px-3 py-1.5 rounded-md text-sm">{error}</p>}
 
               <Button 
                 onClick={generateLetter} 
                 disabled={isGenerating || !cvText || !localJobText} 
-                className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 h-12 text-lg mt-4"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white h-10 text-sm font-semibold mt-2"
               >
                 {isGenerating ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Wand2 className="w-5 h-5 mr-2" />}
                 {isGenerating ? 'Drafting Masterpiece...' : 'Generate Cover Letter'}
@@ -159,8 +193,8 @@ export default function CoverLetterPage() {
         </div>
 
         {/* Right Col: Output Editor */}
-        <div className="space-y-6">
-          <Card className="h-full flex flex-col border-none shadow-xl bg-slate-50 overflow-hidden">
+        <div className="flex flex-col min-h-0 h-full">
+          <Card className="flex-1 flex flex-col border-none shadow-xl bg-slate-50 overflow-hidden">
             <div className="bg-slate-900 p-4 flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-slate-400" />
@@ -177,7 +211,7 @@ export default function CoverLetterPage() {
                 </Button>
               </div>
             </div>
-            <CardContent className="p-0 flex-1 relative min-h-[500px]">
+            <CardContent className="p-0 flex-1 relative min-h-0 flex flex-col">
               {isGenerating && (
                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
                   <div className="w-16 h-16 border-4 border-fuchsia-200 border-t-fuchsia-600 rounded-full animate-spin mb-4" />
@@ -188,7 +222,7 @@ export default function CoverLetterPage() {
               
               {coverLetter ? (
                 <Textarea 
-                  className="w-full h-full min-h-[500px] border-none bg-transparent p-8 text-slate-700 leading-relaxed resize-none focus-visible:ring-0 rounded-none shadow-inner"
+                  className="flex-1 w-full min-h-0 border-none bg-transparent p-6 text-slate-700 leading-relaxed resize-none focus-visible:ring-0 rounded-none shadow-inner"
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
                 />
