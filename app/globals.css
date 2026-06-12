@@ -48,7 +48,7 @@
     background-image: 
       linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-    background-size: 24px 24px;
+    background-size: 32px 32px;
   }
 
   .terminal-text {
@@ -65,11 +65,28 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: #d4d4d8;
+    background: #e4e4e7;
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: #a1a1aa;
+    background: #d4d4d8;
+  }
+
+  .glassmorphism {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(228, 228, 231, 0.5);
+  }
+
+  .glow-orb {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    filter: blur(40px);
+    z-index: -1;
   }
 }

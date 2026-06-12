@@ -13,9 +13,11 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export function Header() {
+  const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const supabase = createClient()
 
@@ -37,8 +39,8 @@ export function Header() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input 
             type="search" 
-            placeholder="Search agents, resources, or history..." 
-            className="w-full bg-zinc-50 pl-9 border-none focus-visible:ring-1"
+            placeholder="Search tools, resources, or history..." 
+            className="w-full bg-zinc-50 pl-9 border border-zinc-200 focus-visible:ring-1 focus-visible:ring-cyan-500"
           />
         </div>
       </div>
@@ -70,7 +72,9 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer">
+              Profile Settings
+            </DropdownMenuItem>
             <DropdownMenuItem>API Keys</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive">Log out</DropdownMenuItem>
