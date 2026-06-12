@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -8,18 +8,33 @@ import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FileSearch, Loader2, CheckCircle2, AlertCircle, Target, UploadCloud } from 'lucide-react'
-import { extractSkills } from '@/lib/parsers/skills'
+import { FileSearch, Loader2, CheckCircle2, AlertCircle, Target, UploadCloud, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useInterviewStore } from '@/lib/store/interview-store'
+
+interface CVMatchResult {
+  score: number
+  matching: string[]
+  gaps: string[]
+  analysis: string
+}
 
 export default function CVMatcherPage() {
   const router = useRouter()
   const [cvText, setCvText] = useState('')
   const [jobText, setJobText] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<CVMatchResult | null>(null)
+  const [selectedSavedJobId, setSelectedSavedJobId] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const resultRef = useRef<HTMLDivElement>(null)
+  const { savedJobDescriptions, setInterviewData } = useInterviewStore()
+
+  useEffect(() => {
+    if (result) {
+      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [result])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -35,6 +50,7 @@ export default function CVMatcherPage() {
 
   const handleScan = async () => {
     setLoading(true)
+    setInterviewData({ cvText, jobText })
     
     try {
       const response = await fetch('/api/agents/cv-matcher', {
@@ -72,7 +88,7 @@ export default function CVMatcherPage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">CV Matcher</h1>
-          <p className="text-slate-500">Scan your CV against live job descriptions to find and fix skill gaps.</p>
+          <p className="text-slate-500">Compare your CV with a job description and get a clear view of fit, strengths, and gaps.</p>
         </div>
       </div>
 
@@ -81,7 +97,7 @@ export default function CVMatcherPage() {
           <Card className="border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle>Input Data</CardTitle>
-              <CardDescription>Upload your CV and paste the target job description.</CardDescription>
+              <CardDescription>Upload your CV, then paste a fresh job description or choose one you already saved.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
@@ -112,6 +128,34 @@ export default function CVMatcherPage() {
                   onChange={(e) => setCvText(e.target.value)}
                 />
               </div>
+              {savedJobDescriptions.length > 0 && (
+                <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label className="text-sm font-medium text-slate-700">Saved Job Descriptions</Label>
+                    <Sparkles className="h-4 w-4 text-cyan-600" />
+                  </div>
+                  <select
+                    value={selectedSavedJobId}
+                    onChange={(e) => {
+                      const nextId = e.target.value
+                      setSelectedSavedJobId(nextId)
+                      const saved = savedJobDescriptions.find((item) => item.id === nextId)
+                      setJobText(saved?.text || '')
+                    }}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-cyan-500 focus:outline-none"
+                  >
+                    <option value="">Choose a saved description</option>
+                    {savedJobDescriptions.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs leading-5 text-slate-500">
+                    Choose a job description from the tracker, or paste a new one below.
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Job Description</Label>
                 <Textarea 
@@ -140,22 +184,36 @@ export default function CVMatcherPage() {
           <Card className={`h-full border-slate-200 shadow-sm ${!result && !loading ? 'opacity-50' : ''}`}>
             <CardHeader>
               <CardTitle>Analysis Results</CardTitle>
-              <CardDescription>Your fit score and identified skill gaps.</CardDescription>
+              <CardDescription>The result will appear here, and we’ll scroll to it once the scan finishes.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent ref={resultRef}>
               {loading ? (
                 <div className="h-[400px] flex flex-col items-center justify-center text-slate-500">
                   <Loader2 className="h-8 w-8 animate-spin mb-4 text-cyan-600" />
-                  <p>Analyzing job requirements...</p>
-                  <p className="text-sm">Comparing skills...</p>
+                  <p>Analyzing the match...</p>
+                  <p className="text-sm">Comparing skills and reading the fit.</p>
                 </div>
               ) : result ? (
-                <div className="space-y-8 animate-fade-in">
-                  <div className="text-center">
-                    <div className="text-6xl font-bold text-cyan-600 mb-2">{result.score}%</div>
-                    <p className="font-medium text-lg text-slate-800">Overall Fit Score</p>
-                    <Progress value={result.score} className="h-3 mt-4 bg-slate-100 [&>div]:bg-cyan-500" />
-                    <p className="text-sm text-slate-500 mt-4">{result.analysis}</p>
+                <div className="space-y-6 animate-fade-in">
+                  <div className="rounded-3xl border border-cyan-100 bg-cyan-50/70 p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-medium uppercase tracking-[0.18em] text-cyan-700">Fit score</p>
+                        <div className="mt-1 text-5xl font-bold text-slate-900">{result.score}%</div>
+                        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">{result.analysis}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 sm:min-w-[220px]">
+                        <div className="rounded-2xl border border-white bg-white p-3 shadow-sm">
+                          <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Matches</div>
+                          <div className="mt-1 text-xl font-semibold text-emerald-600">{result.matching.length}</div>
+                        </div>
+                        <div className="rounded-2xl border border-white bg-white p-3 shadow-sm">
+                          <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Gaps</div>
+                          <div className="mt-1 text-xl font-semibold text-rose-600">{result.gaps.length}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <Progress value={result.score} className="mt-5 h-3 bg-white [&>div]:bg-cyan-500" />
                   </div>
 
                   <Tabs defaultValue="gaps" className="w-full">
@@ -206,7 +264,7 @@ export default function CVMatcherPage() {
                         }}
                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                       >
-                        <Target className="mr-2 h-4 w-4" /> Send Gaps to Interview Prep
+                        <Target className="mr-2 h-4 w-4" /> Send gaps to Interview Prep
                       </Button>
                     </div>
                   )}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import pdfParse from 'pdf-parse'
+import { PDFParse } from 'pdf-parse'
 import mammoth from 'mammoth'
 
 export async function POST(req: NextRequest) {
@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
     let parsedText = ''
 
     if (file.type === 'application/pdf') {
-      const data = await pdfParse(buffer)
+      const parser = new PDFParse({ data: new Uint8Array(buffer) })
+      const data = await parser.getText()
       parsedText = data.text
     } else if (
       file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 

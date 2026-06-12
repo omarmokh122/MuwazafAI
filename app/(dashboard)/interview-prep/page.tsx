@@ -1,18 +1,40 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+import type { ReactNode } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Label } from '@/components/ui/label'
-import { Users, Code, Briefcase, DollarSign, Brain, Target, ArrowLeft, CheckCircle2, PlayCircle, Star, Award, ChevronRight, AlertCircle } from 'lucide-react'
+import { Users, DollarSign, Brain, Target, ArrowLeft, CheckCircle2, PlayCircle, Star, Award, ChevronRight, AlertCircle } from 'lucide-react'
 
-// --- Academy Curriculum Data ---
-const modules = [
+interface Lesson {
+  title: string
+  content: string
+}
+
+interface Quiz {
+  question: string
+  options: string[]
+  correctAnswer: number
+  explanation: string
+}
+
+interface Module {
+  id: string
+  title: string
+  description: string
+  icon: ReactNode
+  color: string
+  borderColor: string
+  lessons: Lesson[]
+  quiz: Quiz
+}
+
+const modules: Module[] = [
   {
     id: 'behavioral',
-    title: 'The Behavioral Masterclass',
-    description: 'Nail every "Tell me about a time..." question using the STAR method.',
+    title: 'Behavioral answers that feel natural',
+    description: 'Practice STAR-style answers that sound clear, confident, and real.',
     icon: <Users className="w-6 h-6 text-blue-600" />,
     color: 'bg-blue-100',
     borderColor: 'border-blue-200 hover:border-blue-400',
@@ -39,8 +61,8 @@ const modules = [
   },
   {
     id: 'body-language',
-    title: 'Body Language & Presence',
-    description: 'Master non-verbal cues to project ultimate confidence.',
+    title: 'Body language and presence',
+    description: 'Learn the small habits that make you look calm and prepared on camera.',
     icon: <Target className="w-6 h-6 text-purple-600" />,
     color: 'bg-purple-100',
     borderColor: 'border-purple-200 hover:border-purple-400',
@@ -67,8 +89,8 @@ const modules = [
   },
   {
     id: 'salary',
-    title: 'Salary Negotiation',
-    description: 'Get paid what you are worth without sounding aggressive.',
+    title: 'Salary negotiation',
+    description: 'Talk about compensation with confidence and without sounding pushy.',
     icon: <DollarSign className="w-6 h-6 text-emerald-600" />,
     color: 'bg-emerald-100',
     borderColor: 'border-emerald-200 hover:border-emerald-400',
@@ -96,7 +118,7 @@ const modules = [
 ]
 
 export default function InterviewAcademy() {
-  const [activeModule, setActiveModule] = useState<any>(null)
+  const [activeModule, setActiveModule] = useState<Module | null>(null)
   const [view, setView] = useState<'hub' | 'lesson' | 'quiz' | 'result'>('hub')
   const [currentLessonIdx, setCurrentLessonIdx] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
@@ -108,13 +130,14 @@ export default function InterviewAcademy() {
   const progressPct = (completedModules.length / modules.length) * 100
 
   // --- Handlers ---
-  const startModule = (mod: any) => {
+  const startModule = (mod: Module) => {
     setActiveModule(mod)
     setCurrentLessonIdx(0)
     setView('lesson')
   }
 
   const nextLesson = () => {
+    if (!activeModule) return
     if (currentLessonIdx < activeModule.lessons.length - 1) {
       setCurrentLessonIdx(currentLessonIdx + 1)
     } else {
@@ -124,7 +147,7 @@ export default function InterviewAcademy() {
   }
 
   const submitQuiz = () => {
-    if (selectedAnswer === null) return
+    if (selectedAnswer === null || !activeModule) return
     setView('result')
     if (selectedAnswer === activeModule.quiz.correctAnswer && !completedModules.includes(activeModule.id)) {
       setXp(xp + 150)
@@ -148,8 +171,8 @@ export default function InterviewAcademy() {
               <Brain className="h-8 w-8" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">Interview Mastery</h1>
-              <p className="text-slate-500">Complete modules to level up your interview skills.</p>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">Interview Prep</h1>
+              <p className="text-slate-500">Short lessons and focused quizzes to help you answer with confidence.</p>
             </div>
           </div>
           
@@ -201,33 +224,35 @@ export default function InterviewAcademy() {
                     {isCompleted ? (
                       <span className="text-sm font-bold text-emerald-600">Completed</span>
                     ) : (
-                      <span className="text-sm font-bold text-violet-600 group-hover:text-violet-700 flex items-center">
+                    <span className="text-sm font-bold text-violet-600 group-hover:text-violet-700 flex items-center">
                         Start <ChevronRight className="w-4 h-4 ml-1" />
-                      </span>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
 
-          {/* Locked Simulator Card */}
-          <Card className="opacity-60 grayscale border-dashed border-2 cursor-not-allowed">
-            <CardContent className="p-6">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-slate-200">
-                <Target className="w-6 h-6 text-slate-500" />
-              </div>
-              <h3 className="font-bold text-xl mb-2 text-slate-800">AI Mock Simulator</h3>
-              <p className="text-sm text-slate-500 mb-6">Complete all fundamental modules to unlock the live AI interview simulator.</p>
-              <div className="flex items-center text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg w-fit">
-                Locked
-              </div>
+        {/* Locked Simulator Card */}
+        <Card className="opacity-60 grayscale border-dashed border-2 cursor-not-allowed">
+          <CardContent className="p-6">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-slate-200">
+              <Target className="w-6 h-6 text-slate-500" />
+            </div>
+            <h3 className="font-bold text-xl mb-2 text-slate-800">Mock interview simulator</h3>
+            <p className="text-sm text-slate-500 mb-6">Complete the core modules to unlock a live practice mode.</p>
+            <div className="flex items-center text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg w-fit">
+              Locked
+            </div>
             </CardContent>
           </Card>
         </div>
       </div>
     )
   }
+
+  if (!activeModule) return null
 
   return (
     <div className="max-w-3xl mx-auto animate-in slide-in-from-bottom-8 pb-12">
@@ -301,7 +326,7 @@ export default function InterviewAcademy() {
                   <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Award className="w-12 h-12" />
                   </div>
-                  <h3 className="text-3xl font-bold text-slate-900 mb-2">Excellent!</h3>
+                  <h3 className="text-3xl font-bold text-slate-900 mb-2">Nice work!</h3>
                   <p className="text-emerald-600 font-medium mb-6">+150 XP Earned</p>
                 </>
               ) : (
@@ -309,8 +334,8 @@ export default function InterviewAcademy() {
                   <div className="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <AlertCircle className="w-12 h-12" />
                   </div>
-                  <h3 className="text-3xl font-bold text-slate-900 mb-2">Not quite.</h3>
-                  <p className="text-slate-500 mb-6">Let's review why that wasn't the best approach.</p>
+                  <h3 className="text-3xl font-bold text-slate-900 mb-2">Almost there.</h3>
+                  <p className="text-slate-500 mb-6">Let&apos;s review why this answer could be stronger.</p>
                 </>
               )}
 
