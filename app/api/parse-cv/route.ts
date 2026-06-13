@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file size (5MB max)
+    // Validate file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 400 })
     }
@@ -20,17 +21,57 @@ export async function POST(req: NextRequest) {
     const ext = file.name?.substring(file.name.lastIndexOf('.')).toLowerCase() || ''
 
     if (file.type === 'application/pdf' || ext === '.pdf') {
+      let needsGeminiFallback = false
+
       try {
         const pdfParse = require('pdf-parse')
         const data = await pdfParse(buffer)
         parsedText = data.text || ''
+        
+        // If it's an image-based PDF, pdf-parse will return empty or very little text
+        if (!parsedText || parsedText.trim().length < 50) {
+          needsGeminiFallback = true
+        }
       } catch (pdfError: any) {
-        console.error('PDF parse error:', pdfError)
-        return NextResponse.json(
-          { error: 'Could not read this PDF. It may be image-based or corrupted. Please try a different file.' },
-          { status: 422 }
-        )
+        console.error('PDF parse error, falling back to Gemini:', pdfError)
+        needsGeminiFallback = true
       }
+
+      // ─── Gemini Fallback for Image-based or Corrupted PDFs ───
+      if (needsGeminiFallback) {
+        console.log('Using Gemini Vision to parse PDF...')
+        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY
+        if (!apiKey) {
+          return NextResponse.json(
+            { error: 'Could not read this PDF. It may be image-based, and Gemini fallback is unconfigured.' },
+            { status: 422 }
+          )
+        }
+
+        try {
+          const genAI = new GoogleGenerativeAI(apiKey)
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+          
+          const result = await model.generateContent([
+            'Extract all the text from this resume document exactly as it is written. Preserve the structure and ignore any images or styling. Do not add any conversational text.',
+            {
+              inlineData: {
+                data: buffer.toString('base64'),
+                mimeType: 'application/pdf'
+              }
+            }
+          ])
+          
+          parsedText = result.response.text()
+        } catch (geminiError: any) {
+          console.error('Gemini PDF parse error:', geminiError)
+          return NextResponse.json(
+            { error: 'Could not extract text from this PDF, even with AI vision. Please try a different file.' },
+            { status: 422 }
+          )
+        }
+      }
+
     } else if (
       file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       ext === '.docx'
@@ -61,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     if (!parsedText || parsedText.trim().length < 10) {
       return NextResponse.json(
-        { error: 'Could not extract meaningful text from this file. It may be image-based. Please try a different file.' },
+        { error: 'Could not extract meaningful text from this file. Please try a different file.' },
         { status: 422 }
       )
     }
