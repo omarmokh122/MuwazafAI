@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     const pdfBuffer = await promise
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
