@@ -25,6 +25,7 @@ export default function CoverLetterPage() {
   const [companyAddress, setCompanyAddress] = useState('')
   
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
@@ -89,6 +90,34 @@ export default function CoverLetterPage() {
     navigator.clipboard.writeText(coverLetter)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleExport = async () => {
+    if (!coverLetter) return
+    setIsExporting(true)
+    try {
+      const res = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: coverLetter })
+      })
+
+      if (!res.ok) throw new Error('Failed to generate PDF')
+
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Cover_Letter_${companyName ? companyName.replace(/\s+/g, '_') : 'Muwaazaf'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err: any) {
+      setError(err.message || "Export failed.")
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -254,9 +283,9 @@ export default function CoverLetterPage() {
                   {copied ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                   {copied ? 'Copied' : 'Copy'}
                 </Button>
-                {/* Future: Add PDF download logic here */}
-                <Button size="sm" variant="outline" disabled={!coverLetter} className="bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700">
-                  <Download className="w-4 h-4 mr-2" /> Export
+                <Button size="sm" variant="outline" onClick={handleExport} disabled={!coverLetter || isExporting} className="bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700">
+                  {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                  {isExporting ? 'Exporting...' : 'Export PDF'}
                 </Button>
               </div>
             </div>
