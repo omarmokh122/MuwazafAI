@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,6 +12,7 @@ import { FileSearch, Loader2, CheckCircle2, AlertCircle, Target, UploadCloud, Ar
 import { extractSkills } from '@/lib/parsers/skills'
 import { useRouter } from 'next/navigation'
 import { useInterviewStore } from '@/lib/store/interview-store'
+import { useUserProfile } from '@/lib/store/user-profile'
 
 export default function CVMatcherPage() {
   const router = useRouter()
@@ -21,6 +22,14 @@ export default function CVMatcherPage() {
   const [result, setResult] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const jobFileInputRef = useRef<HTMLInputElement>(null)
+  
+  const { cvText: profileCvText } = useUserProfile()
+
+  useEffect(() => {
+    if (profileCvText && !cvText) {
+      setCvText(profileCvText)
+    }
+  }, [profileCvText])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
