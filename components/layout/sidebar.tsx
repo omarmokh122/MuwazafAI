@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Brain, LayoutDashboard, FileSearch, Target, PlayCircle, Briefcase, Scale, FolderOpen, LogOut, ListTodo, LineChart } from 'lucide-react'
+import { Brain, LayoutDashboard, FileSearch, Target, PlayCircle, Briefcase, Scale, FolderOpen, LogOut, ListTodo, LineChart, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -22,7 +22,7 @@ const navItems = [
   { name: 'Resources', href: '/resources', icon: FolderOpen },
 ]
 
-export function Sidebar() {
+export function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean, setIsOpen?: (v: boolean) => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -39,15 +39,32 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex h-screen w-64 flex-col bg-el-white text-el-black shadow-[rgba(0,0,0,0.06)_1px_0px_0px_0px]">
-      <div className="flex h-16 items-center px-6 shadow-[rgba(0,0,0,0.06)_0px_1px_0px_0px]">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="h-8 w-8 flex items-center justify-center shadow-el-inset-edge">
-            <Logo />
-          </div>
-          <span className="text-[17px] font-medium tracking-tight text-el-black">Muwaazaf</span>
-        </Link>
-      </div>
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && setIsOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col bg-el-white text-el-black shadow-[rgba(0,0,0,0.06)_1px_0px_0px_0px] transition-transform duration-300 ease-in-out md:static md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex h-16 items-center justify-between px-6 shadow-[rgba(0,0,0,0.06)_0px_1px_0px_0px]">
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <div className="h-8 w-8 flex items-center justify-center shadow-el-inset-edge">
+              <Logo />
+            </div>
+            <span className="text-[17px] font-medium tracking-tight text-el-black">Muwaazaf</span>
+          </Link>
+          {setIsOpen && (
+            <Button variant="ghost" size="icon" className="md:hidden -mr-2" onClick={() => setIsOpen(false)}>
+              <X className="h-5 w-5 text-el-dark-gray" />
+            </Button>
+          )}
+        </div>
 
       <nav className="flex-1 space-y-1 px-4 py-6 overflow-y-auto scrollbar-thin">
         {navItems.map((item) => {
@@ -56,6 +73,7 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => setIsOpen && setIsOpen(false)}
               className={cn(
                 "group flex items-center gap-3 rounded-[6px] px-3 py-2 text-[14px] font-medium transition-colors",
                 isActive 
@@ -80,6 +98,7 @@ export function Sidebar() {
           Sign out
         </Button>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

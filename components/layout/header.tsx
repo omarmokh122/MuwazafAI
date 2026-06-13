@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, LogOut } from 'lucide-react'
+import { Bell, Search, LogOut, Menu } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation'
 import { useUserProfile } from '@/lib/store/user-profile'
 import { createClient } from '@/lib/supabase/client'
 
-export function Header() {
+export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter()
   const { fullName, email, initials } = useUserProfile()
   const supabase = createClient()
@@ -35,8 +35,13 @@ export function Header() {
 
   return (
     <header className="h-16 shadow-[rgba(0,0,0,0.06)_0px_1px_0px_0px] bg-el-white flex items-center justify-between px-6 sticky top-0 z-10">
-      <div className="flex-1 max-w-md">
-        <div className="relative">
+      <div className="flex items-center gap-4 flex-1 max-w-md">
+        {onMenuClick && (
+          <Button variant="ghost" size="icon" className="md:hidden -ml-2" onClick={onMenuClick}>
+            <Menu className="h-6 w-6 text-el-black" />
+          </Button>
+        )}
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input 
             type="search" 
