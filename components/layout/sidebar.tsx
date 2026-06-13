@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Logo } from '@/components/ui/logo'
+import { useUserProfile } from '@/lib/store/user-profile'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -25,20 +26,15 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const { clearProfile } = useUserProfile()
 
   const handleLogout = async () => {
-    // Clear Supabase session
     await supabase.auth.signOut()
-    // Clear demo mode cookie
     document.cookie = 'demo_mode=; path=/; max-age=0'
-    // Clear any stored profile data
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('muwaazaf_cv_text')
-      localStorage.removeItem('muwaazaf_cv_filename')
-      localStorage.removeItem('muwaazaf_position')
-      localStorage.removeItem('muwaazaf_target_role')
-      localStorage.removeItem('muwaazaf_field')
-    }
+    clearProfile()
+    // Clear interview store too
+    localStorage.removeItem('muwaazaf-interview-storage')
+    localStorage.removeItem('muwaazaf-user-profile')
     window.location.href = '/'
   }
 

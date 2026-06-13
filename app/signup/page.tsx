@@ -6,6 +6,8 @@ import { ArrowLeft, Loader2, Upload, FileText, CheckCircle2, ChevronDown, X } fr
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useUserProfile } from '@/lib/store/user-profile'
+import { useInterviewStore } from '@/lib/store/interview-store'
 
 /* ─── Dot Grid Canvas (follows mouse) ────────────────────────── */
 function DotGrid() {
@@ -217,6 +219,8 @@ const FIELDS = [
 /* ─── Main Page ────────────────────────── */
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [nameValue, setNameValue] = useState('')
+  const [emailValue, setEmailValue] = useState('')
   const [currentPosition, setCurrentPosition] = useState('')
   const [targetRole, setTargetRole] = useState('')
   const [field, setField] = useState('')
@@ -224,7 +228,10 @@ export default function SignupPage() {
   const [cvUploading, setCvUploading] = useState(false)
   const [cvSuccess, setCvSuccess] = useState(false)
   const [cvError, setCvError] = useState('')
+  const [parsedCvText, setParsedCvText] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const { setProfile } = useUserProfile()
+  const { setInterviewData } = useInterviewStore()
 
   const handleCvFile = async (file: File) => {
     const validTypes = [
@@ -240,8 +247,8 @@ export default function SignupPage() {
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setCvError('File size must be less than 5MB')
+    if (file.size > 10 * 1024 * 1024) {
+      setCvError('File size must be less than 10MB')
       return
     }
 
@@ -257,11 +264,7 @@ export default function SignupPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to process file')
 
-      // Store parsed CV text in localStorage for use across features
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('muwaazaf_cv_text', data.text)
-        localStorage.setItem('muwaazaf_cv_filename', data.fileName)
-      }
+      setParsedCvText(data.text)
       setCvSuccess(true)
     } catch (err: any) {
       setCvError(err.message || 'Failed to process file. Please try again.')
@@ -275,11 +278,20 @@ export default function SignupPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Store profile selections
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('muwaazaf_position', currentPosition)
-      localStorage.setItem('muwaazaf_target_role', targetRole)
-      localStorage.setItem('muwaazaf_field', field)
+    // Save all signup data to the central profile store
+    setProfile({
+      fullName: nameValue,
+      email: emailValue,
+      currentPosition,
+      targetRole,
+      field,
+      cvText: parsedCvText,
+      cvFileName: cvFile?.name || null,
+    })
+
+    // Also feed CV into the interview store so other features can use it
+    if (parsedCvText) {
+      setInterviewData({ cvText: parsedCvText, cvFileName: cvFile?.name || null })
     }
 
     setTimeout(() => {
@@ -353,11 +365,11 @@ export default function SignupPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" type="text" placeholder="Omar Mokhtar" required className="h-12 rounded-xl" />
+                <Input id="name" type="text" placeholder="Omar Mokhtar" required className="h-12 rounded-xl" value={nameValue} onChange={(e) => setNameValue(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" required className="h-12 rounded-xl" />
+                <Input id="email" type="email" placeholder="you@example.com" required className="h-12 rounded-xl" value={emailValue} onChange={(e) => setEmailValue(e.target.value)} />
               </div>
             </div>
 
@@ -437,7 +449,7 @@ export default function SignupPage() {
                     <p className="text-sm font-medium text-slate-600">
                       {cvUploading ? 'Processing...' : 'Click to upload PDF, DOC or DOCX'}
                     </p>
-                    <p className="text-xs text-slate-400">Max file size: 5MB</p>
+                    <p className="text-xs text-slate-400">Max file size: 10MB</p>
                   </div>
                 </div>
               )}

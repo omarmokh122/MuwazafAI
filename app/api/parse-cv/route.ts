@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File size exceeds 5MB limit' }, { status: 400 })
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 400 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())

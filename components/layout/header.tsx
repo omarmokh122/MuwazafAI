@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, LogOut } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -12,25 +12,26 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useUserProfile } from '@/lib/store/user-profile'
 import { createClient } from '@/lib/supabase/client'
 
 export function Header() {
   const router = useRouter()
-  const [profile, setProfile] = useState<any>(null)
+  const { fullName, email, initials } = useUserProfile()
   const supabase = createClient()
+  const { clearProfile } = useUserProfile()
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-        setProfile(data)
-      }
-    }
-    fetchProfile()
-  }, [])
+  const displayName = fullName || 'Guest User'
+  const displayEmail = email || 'demo@muwaazaf.com'
+  const avatarInitial = initials()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    document.cookie = 'demo_mode=; path=/; max-age=0'
+    clearProfile()
+    window.location.href = '/'
+  }
 
   return (
     <header className="h-16 shadow-[rgba(0,0,0,0.06)_0px_1px_0px_0px] bg-el-white flex items-center justify-between px-6 sticky top-0 z-10">
@@ -53,11 +54,10 @@ export function Header() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={profile?.avatar_url} alt={profile?.full_name || 'User'} />
-                <AvatarFallback className="bg-cyan-100 text-cyan-800">
-                  {profile?.full_name ? profile.full_name.substring(0, 2).toUpperCase() : 'U'}
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="bg-slate-900 text-white text-sm font-semibold">
+                  {avatarInitial}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -65,9 +65,9 @@ export function Header() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{profile?.full_name || 'Guest User'}</p>
+                <p className="text-sm font-medium leading-none">{displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {profile?.email || 'Not logged in'}
+                  {displayEmail}
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -75,9 +75,11 @@ export function Header() {
             <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer">
               Profile Settings
             </DropdownMenuItem>
-            <DropdownMenuItem>API Keys</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">Log out</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive cursor-pointer" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
