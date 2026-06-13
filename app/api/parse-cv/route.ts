@@ -22,10 +22,7 @@ export async function POST(req: NextRequest) {
     if (file.type === 'application/pdf' || ext === '.pdf') {
       try {
         const pdfParse = require('pdf-parse')
-        const data = await pdfParse(buffer, {
-          // Prevent pdf-parse from trying to load test files
-          max: 0, // no page limit
-        })
+        const data = await pdfParse(buffer)
         parsedText = data.text || ''
       } catch (pdfError: any) {
         console.error('PDF parse error:', pdfError)
