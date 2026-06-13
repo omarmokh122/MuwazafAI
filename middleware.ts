@@ -1,54 +1,24 @@
-import { createServerClient } from '@supabase/ssr'
+
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  let supabaseResponse = NextResponse.next()
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/["']/g, "")
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.replace(/["']/g, "")
-
-    let user = null;
-
-    if (supabaseUrl && supabaseKey && supabaseUrl.startsWith('http')) {
-      const supabase = createServerClient(
-        supabaseUrl,
-        supabaseKey,
-        {
-          cookies: {
-            getAll() {
-              return request.cookies.getAll()
-            },
-            setAll(cookiesToSet) {
-              cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-              supabaseResponse = NextResponse.next({ request })
-              cookiesToSet.forEach(({ name, value, options }) =>
-                supabaseResponse.cookies.set(name, value, options)
-              )
-            },
-          },
-        }
-      )
-      const { data } = await supabase.auth.getUser()
-      user = data.user
-    } else {
-      console.log('Skipping Supabase auth in proxy: Missing or invalid environment variables.')
-    }
-
     const { pathname } = request.nextUrl
     const protectedRoutes = ['/dashboard', '/scout', '/coach', '/simulation', '/application', '/rights', '/benchmark', '/resources', '/profile']
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
     const isDemoMode = request.cookies.get('demo_mode')?.value === 'true'
 
-    if (!user && !isDemoMode && isProtectedRoute) {
+    if (!isDemoMode && isProtectedRoute) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.searchParams.set('redirect', pathname)
       return NextResponse.redirect(url)
     }
 
-    if ((user || isDemoMode) && (pathname === '/login' || pathname === '/signup')) {
+    if (isDemoMode && (pathname === '/login' || pathname === '/signup')) {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
