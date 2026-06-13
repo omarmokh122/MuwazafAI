@@ -97,6 +97,7 @@ export default function ProfilePage() {
   const [position, setPosition] = useState('')
   const [role, setRole] = useState('')
   const [field, setField] = useState('')
+  const [cvText, setCvText] = useState('')
   const [saved, setSaved] = useState(false)
   
   const [isDragging, setIsDragging] = useState(false)
@@ -111,7 +112,8 @@ export default function ProfilePage() {
     setPosition(profile.currentPosition || '')
     setRole(profile.targetRole || '')
     setField(profile.field || '')
-  }, [profile.fullName, profile.email, profile.currentPosition, profile.targetRole, profile.field])
+    setCvText(profile.cvText || storeCvFile ? profile.cvText : '') // Initialize from store
+  }, [profile.fullName, profile.email, profile.currentPosition, profile.targetRole, profile.field, profile.cvText, storeCvFile])
 
   const handleSave = () => {
     profile.setProfile({
@@ -120,7 +122,9 @@ export default function ProfilePage() {
       currentPosition: position,
       targetRole: role,
       field,
+      cvText: cvText,
     })
+    setInterviewData({ cvText: cvText })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -159,6 +163,7 @@ export default function ProfilePage() {
       // Save to both stores
       setInterviewData({ cvText: data.text, cvFileName: data.fileName })
       profile.setProfile({ cvText: data.text, cvFileName: data.fileName })
+      setCvText(data.text)
     } catch (err: any) {
       setError(err.message || 'Failed to process file')
     } finally {
@@ -322,6 +327,30 @@ export default function ProfilePage() {
                   if (e.target.files?.[0]) handleFile(e.target.files[0])
                 }}
               />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Raw CV Text</CardTitle>
+              <CardDescription>If your file failed to upload or parsing missed something, you can manually paste or edit your CV text here.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <textarea
+                className="w-full h-64 p-4 rounded-xl border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 text-sm font-mono text-slate-700 resize-y"
+                placeholder="Paste your CV text here..."
+                value={cvText}
+                onChange={(e) => setCvText(e.target.value)}
+              />
+              <div className="flex justify-end mt-4">
+                <Button className="bg-slate-900 hover:bg-slate-800 text-white" onClick={handleSave}>
+                  {saved ? (
+                    <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Saved!</span>
+                  ) : (
+                    <span className="flex items-center gap-2"><Save className="w-4 h-4" /> Save CV Text</span>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

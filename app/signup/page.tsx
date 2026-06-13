@@ -468,6 +468,16 @@ export default function SignupPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label>Raw CV Text <span className="text-slate-400 font-normal">(fallback)</span></Label>
+              <textarea
+                className="w-full h-32 p-3 rounded-xl border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 text-sm font-mono text-slate-700 resize-y"
+                placeholder="Paste your CV text here if the upload fails or to provide it manually."
+                value={parsedCvText}
+                onChange={(e) => setParsedCvText(e.target.value)}
+              />
+            </div>
+
             <Button
               type="submit"
               className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-all mt-2 shadow-lg shadow-slate-900/10"
