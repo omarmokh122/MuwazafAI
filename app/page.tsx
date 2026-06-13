@@ -1,11 +1,80 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Brain, ArrowRight, PlayCircle, Activity, Briefcase, ChevronRight } from 'lucide-react'
 import { Logo } from '@/components/ui/logo'
+
+/* ─── Dot Grid Canvas (follows mouse) ────────────────────────── */
+function DotGrid() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const mouse = useRef({ x: -1000, y: -1000 })
+  const animRef = useRef<number>(0)
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const dpr = window.devicePixelRatio || 1
+    canvas.width = canvas.offsetWidth * dpr
+    canvas.height = canvas.offsetHeight * dpr
+    ctx.scale(dpr, dpr)
+    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight)
+
+    const gap = 28
+    const baseRadius = 1.5
+    const maxRadius = 4
+    const influence = 140
+
+    for (let x = gap; x < canvas.offsetWidth; x += gap) {
+      for (let y = gap; y < canvas.offsetHeight; y += gap) {
+        const dx = x - mouse.current.x
+        const dy = y - mouse.current.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+
+        const t = Math.max(0, 1 - dist / influence)
+        const radius = baseRadius + (maxRadius - baseRadius) * t
+        const alpha = 0.12 + 0.4 * t
+
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`
+        ctx.fill()
+      }
+    }
+
+    animRef.current = requestAnimationFrame(draw)
+  }, [])
+
+  useEffect(() => {
+    animRef.current = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(animRef.current)
+  }, [draw])
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (rect) {
+      mouse.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    }
+  }
+
+  const handleMouseLeave = () => {
+    mouse.current = { x: -1000, y: -1000 }
+  }
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-auto"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    />
+  )
+}
 
 export default function LandingPage() {
   const [isDemoLoading, setIsDemoLoading] = useState(false)
@@ -62,27 +131,30 @@ export default function LandingPage() {
 
       <main className="flex-1 pt-16 relative">
         {/* Hero Section */}
-        <section className="relative pt-32 pb-40 lg:pt-48 lg:pb-56">
+        <section className="relative pt-32 pb-40 lg:pt-48 lg:pb-56 overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <DotGrid />
+          </div>
+          
           <motion.div 
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="container relative mx-auto px-6 text-center max-w-[900px]"
+            className="container relative z-10 mx-auto px-6 text-center max-w-[900px] pointer-events-none"
           >
-            <motion.div variants={itemVariants} className="inline-flex items-center rounded-full border shadow-el-inset-edge bg-el-near-white px-3 py-1 text-[13px] font-medium text-el-dark-gray mb-10">
-              Introducing the Next-Gen Career Agent
-            </motion.div>
-            
             <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-[84px] font-light tracking-[-0.02em] mb-8 text-el-black leading-[1.05]">
               Elevate Your <br />
               <span className="text-el-warm-gray">Professional Journey.</span>
             </motion.h1>
             
+            <motion.div variants={itemVariants} className="w-24 h-1 bg-gradient-to-r from-transparent via-slate-300 to-transparent mx-auto rounded-full mb-8" />
+            
+            
             <motion.p variants={itemVariants} className="text-lg md:text-[20px] text-el-dark-gray mb-14 max-w-2xl mx-auto font-normal leading-[1.6]">
               Your AI-powered career co-pilot. Seamlessly match your CV, track applications, prepare for interviews, and negotiate offers with data-driven confidence.
             </motion.p>
             
-            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4 pointer-events-auto">
               <button 
                 onClick={handleDemoLogin} 
                 disabled={isDemoLoading}
