@@ -27,9 +27,19 @@ export function Sidebar() {
   const supabase = createClient()
 
   const handleLogout = async () => {
+    // Clear Supabase session
     await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    // Clear demo mode cookie
+    document.cookie = 'demo_mode=; path=/; max-age=0'
+    // Clear any stored profile data
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('muwaazaf_cv_text')
+      localStorage.removeItem('muwaazaf_cv_filename')
+      localStorage.removeItem('muwaazaf_position')
+      localStorage.removeItem('muwaazaf_target_role')
+      localStorage.removeItem('muwaazaf_field')
+    }
+    window.location.href = '/'
   }
 
   return (
