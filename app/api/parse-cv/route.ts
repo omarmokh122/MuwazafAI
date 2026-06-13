@@ -30,46 +30,17 @@ export async function POST(req: NextRequest) {
         
         // If it's an image-based PDF, pdf-parse will return empty or very little text
         if (!parsedText || parsedText.trim().length < 50) {
-          needsGeminiFallback = true
+          return NextResponse.json(
+            { error: 'This PDF appears to be a scanned image or flattened file without selectable text. Please upload a standard text-based PDF or a Word document.' },
+            { status: 422 }
+          )
         }
       } catch (pdfError: any) {
-        console.error('PDF parse error, falling back to Gemini:', pdfError)
-        needsGeminiFallback = true
-      }
-
-      // ─── Gemini Fallback for Image-based or Corrupted PDFs ───
-      if (needsGeminiFallback) {
-        console.log('Using Gemini Vision to parse PDF...')
-        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY
-        if (!apiKey) {
-          return NextResponse.json(
-            { error: 'Could not read this PDF. It may be image-based, and Gemini fallback is unconfigured.' },
-            { status: 422 }
-          )
-        }
-
-        try {
-          const genAI = new GoogleGenerativeAI(apiKey)
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-          
-          const result = await model.generateContent([
-            'Extract all the text from this resume document exactly as it is written. Preserve the structure and ignore any images or styling. Do not add any conversational text.',
-            {
-              inlineData: {
-                data: buffer.toString('base64'),
-                mimeType: 'application/pdf'
-              }
-            }
-          ])
-          
-          parsedText = result.response.text()
-        } catch (geminiError: any) {
-          console.error('Gemini PDF parse error:', geminiError)
-          return NextResponse.json(
-            { error: 'Could not extract text from this PDF, even with AI vision. Please try a different file.' },
-            { status: 422 }
-          )
-        }
+        console.error('PDF parse error:', pdfError)
+        return NextResponse.json(
+          { error: 'Could not read this PDF. It may be corrupted or encrypted. Please try a different file or format.' },
+          { status: 422 }
+        )
       }
 
     } else if (
