@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 export async function POST(req: NextRequest) {
   try {
-    const { cvText, jobText, tone } = await req.json()
+    const { cvText, jobText, tone, date, hiringManagerName, hiringManagerTitle, companyName, companyAddress } = await req.json()
 
     if (!cvText || !jobText) {
       return NextResponse.json({ error: 'CV and Job Description are required' }, { status: 400 })
@@ -15,18 +15,29 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey)
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
+    const targetDate = date || '[Date]';
+    const targetHiringManagerName = hiringManagerName || '[Hiring Manager Name]';
+    const targetHiringManagerTitle = hiringManagerTitle || '[Hiring Manager Title]';
+    const targetCompanyName = companyName || '[Company Name]';
+    const targetCompanyAddress = companyAddress || '[Company Address]';
+
     const prompt = `You are a world-class executive resume writer and career coach.
 Write a highly targeted, professional cover letter for the candidate based on their CV and the Job Description provided below.
 
 INSTRUCTIONS:
 1. Tone: ${tone || 'Professional and confident'}.
 2. Structure: 
+   - Start with a professional header block using exactly these target details:
+     Date: ${targetDate}
+     Hiring Manager Name: ${targetHiringManagerName}
+     Hiring Manager Title: ${targetHiringManagerTitle}
+     Company Name: ${targetCompanyName}
+     Company Address: ${targetCompanyAddress}
    - A strong opening hook.
    - 2-3 body paragraphs highlighting specific achievements from the CV that directly match the core requirements in the JD.
    - A confident call-to-action closing.
 3. Keep it under 400 words.
 4. Do NOT hallucinate skills or experiences the candidate does not have.
-5. Use placeholders like [Company Name], [Hiring Manager Name], and [Date] where appropriate.
 
 CANDIDATE CV:
 ---

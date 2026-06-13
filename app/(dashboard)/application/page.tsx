@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useInterviewStore } from '@/lib/store/interview-store'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { FileText, Loader2, Wand2, Briefcase, Copy, Download, UserCircle, CheckCircle2, UploadCloud } from 'lucide-react'
 
@@ -16,6 +17,12 @@ export default function CoverLetterPage() {
   
   const [localJobText, setLocalJobText] = useState(jobText || '')
   const [selectedTone, setSelectedTone] = useState(TONES[0])
+
+  const [date, setDate] = useState(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
+  const [hiringManagerName, setHiringManagerName] = useState('')
+  const [hiringManagerTitle, setHiringManagerTitle] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [companyAddress, setCompanyAddress] = useState('')
   
   const [isGenerating, setIsGenerating] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
@@ -55,7 +62,16 @@ export default function CoverLetterPage() {
       const res = await fetch('/api/agents/cover-letter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cvText, jobText: localJobText, tone: selectedTone })
+        body: JSON.stringify({ 
+          cvText, 
+          jobText: localJobText, 
+          tone: selectedTone,
+          date,
+          hiringManagerName,
+          hiringManagerTitle,
+          companyName,
+          companyAddress
+        })
       })
       
       const data = await res.json()
@@ -126,7 +142,40 @@ export default function CoverLetterPage() {
 
           <Card className="border-slate-200 shadow-sm shrink-0">
             <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-3 pb-2">
-              <CardTitle className="text-base text-slate-800">2. Job & Tone</CardTitle>
+              <CardTitle className="text-base text-slate-800">2. Target Company <span className="text-slate-400 font-normal text-sm">(Optional)</span></CardTitle>
+              <CardDescription className="text-xs">Fill in these details to format the header perfectly.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 p-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Date</label>
+                  <Input className="h-8 text-xs" placeholder="e.g. October 15, 2024" value={date} onChange={(e) => setDate(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Company Name</label>
+                  <Input className="h-8 text-xs" placeholder="e.g. Nexa Digital Solutions" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Company Address</label>
+                <Input className="h-8 text-xs" placeholder="e.g. 123 Tech Lane, San Francisco, CA" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Hiring Manager Name</label>
+                  <Input className="h-8 text-xs" placeholder="e.g. Jane Doe" value={hiringManagerName} onChange={(e) => setHiringManagerName(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Manager Title</label>
+                  <Input className="h-8 text-xs" placeholder="e.g. Head of Engineering" value={hiringManagerTitle} onChange={(e) => setHiringManagerTitle(e.target.value)} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 shadow-sm shrink-0">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-3 pb-2">
+              <CardTitle className="text-base text-slate-800">3. Job & Tone</CardTitle>
               <CardDescription className="text-xs">Paste the target JD so the AI can tailor your letter.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 p-3">
@@ -160,7 +209,7 @@ export default function CoverLetterPage() {
               </div>
               
               <div className="space-y-3">
-                <label className="text-sm font-semibold text-slate-700 block">3. Select Tone</label>
+                <label className="text-sm font-semibold text-slate-700 block">4. Select Tone</label>
                 <div className="flex flex-wrap gap-2.5">
                   {TONES.map(tone => (
                     <button
