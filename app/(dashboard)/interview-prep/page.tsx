@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useUserProfile } from '@/lib/store/user-profile'
+import { useInterviewStore } from '@/lib/store/interview-store'
+import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -8,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Users, Code, Briefcase, DollarSign, Brain, Target, ArrowLeft, CheckCircle2, PlayCircle, Star, Award, ChevronRight, AlertCircle } from 'lucide-react'
 
 // --- Academy Curriculum Data ---
-const modules = [
+const baseModules = [
   {
     id: 'screening',
     title: 'Screening Interviews',
@@ -385,12 +388,137 @@ const modules = [
   }
 ]
 
+
+const predefinedTechModules: Record<string, any> = {
+  'Software Engineer': {
+    id: 'technical',
+    title: 'Technical Interviews (SWE)',
+    description: 'Frameworks for algorithms, data structures, and system design rounds.',
+    icon: <Code className="w-6 h-6 text-slate-700" />,
+    lessons: [
+      {
+        title: 'The REACT Method for Algorithms',
+        content: (
+          <div className="space-y-4">
+            <p>Never jump straight into coding when given an algorithm question. Use the <strong>REACT</strong> method:</p>
+            <ul className="space-y-2 mt-2">
+              <li><strong>R - Repeat:</strong> Repeat the question back to confirm understanding.</li>
+              <li><strong>E - Examples:</strong> Write out 2-3 edge cases.</li>
+              <li><strong>A - Approach:</strong> Verbally explain your algorithm before coding.</li>
+              <li><strong>C - Code:</strong> Write the actual code cleanly.</li>
+              <li><strong>T - Test:</strong> Dry-run your code line-by-line.</li>
+            </ul>
+          </div>
+        )
+      },
+      {
+        title: 'System Design Framework (PEDALS)',
+        content: (
+          <div className="space-y-4">
+            <p>For mid-to-senior roles, follow the <strong>PEDALS</strong> framework:</p>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+              <li className="bg-white border rounded-lg p-3 text-sm"><strong>P:</strong> Process Requirements</li>
+              <li className="bg-white border rounded-lg p-3 text-sm"><strong>E:</strong> Estimate capacity</li>
+              <li className="bg-white border rounded-lg p-3 text-sm"><strong>D:</strong> Design the API</li>
+              <li className="bg-white border rounded-lg p-3 text-sm"><strong>A:</strong> Architecture</li>
+              <li className="bg-white border rounded-lg p-3 text-sm"><strong>L:</strong> Logical Database</li>
+              <li className="bg-white border rounded-lg p-3 text-sm"><strong>S:</strong> Scale bottlenecks</li>
+            </ul>
+          </div>
+        )
+      }
+    ],
+    quiz: {
+      question: "You are given a complex algorithm question. What is the very first thing you should do?",
+      options: ["Start writing a for-loop", "Ask to use a different language", "Repeat the question back and clarify"],
+      correctAnswer: 2,
+      explanation: "Jumping straight into code often leads to solving the wrong problem."
+    }
+  },
+  'Product Manager': {
+    id: 'technical_pm',
+    title: 'Technical Interviews (Product)',
+    description: 'Frameworks for product sense, execution, and strategy rounds.',
+    icon: <Code className="w-6 h-6 text-slate-700" />,
+    lessons: [
+      {
+        title: 'Product Sense (CIRCLES)',
+        content: (
+          <div className="space-y-4">
+            <p>When asked to design a product, use the CIRCLES method:</p>
+            <ul className="space-y-2 mt-2 list-disc pl-6">
+              <li><strong>Comprehend the situation:</strong> Goal, constraints.</li>
+              <li><strong>Identify the customer:</strong> Personas.</li>
+              <li><strong>Report the customer needs:</strong> Use cases.</li>
+              <li><strong>Cut through prioritizing:</strong> ROI.</li>
+              <li><strong>List solutions:</strong> Brainstorm.</li>
+              <li><strong>Evaluate tradeoffs.</strong></li>
+              <li><strong>Summarize recommendation.</strong></li>
+            </ul>
+          </div>
+        )
+      }
+    ],
+    quiz: {
+      question: "What is the first step in the CIRCLES method?",
+      options: ["Comprehend the situation", "Identify the customer", "List solutions"],
+      correctAnswer: 0,
+      explanation: "Always understand the goal and constraints before designing."
+    }
+  },
+  'Marketing Specialist': {
+    id: 'technical_mkt',
+    title: 'Technical Interviews (Marketing)',
+    description: 'GTM strategies, campaign analytics, and growth frameworks.',
+    icon: <Code className="w-6 h-6 text-slate-700" />,
+    lessons: [
+      {
+        title: 'Go-To-Market Strategy',
+        content: (
+          <div className="space-y-4">
+            <p>For GTM questions, cover these pillars:</p>
+            <ul className="space-y-2 mt-2 list-disc pl-6">
+              <li><strong>Target Audience:</strong> ICP and buyer personas.</li>
+              <li><strong>Value Prop:</strong> Core messaging and positioning.</li>
+              <li><strong>Channels:</strong> Owned, Earned, Paid.</li>
+              <li><strong>Metrics:</strong> CAC, LTV, ROAS.</li>
+            </ul>
+          </div>
+        )
+      }
+    ],
+    quiz: {
+      question: "Which metric measures the cost to acquire a new customer?",
+      options: ["LTV", "CAC", "ROAS"],
+      correctAnswer: 1,
+      explanation: "Customer Acquisition Cost (CAC) is crucial for GTM efficiency."
+    }
+  }
+}
+
 export default function InterviewAcademy() {
+  const { targetRole } = useUserProfile()
+  const { jobText } = useInterviewStore()
+
   const [activeModule, setActiveModule] = useState<any>(null)
   const [view, setView] = useState<'hub' | 'lesson' | 'quiz' | 'result'>('hub')
   const [currentLessonIdx, setCurrentLessonIdx] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   
+  // Dynamic Tech Prep State
+  const [selectedRole, setSelectedRole] = useState(
+    predefinedTechModules[targetRole || ''] ? targetRole : 'Software Engineer'
+  )
+  const [customTechModule, setCustomTechModule] = useState<any>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  // Combine static modules with the dynamic technical module
+  const currentTechModule = customTechModule || predefinedTechModules[selectedRole] || predefinedTechModules['Software Engineer']
+  const modules = [...baseModules]
+  
+  // Insert the technical module at index 1 (between screening and behavioral)
+  modules.splice(1, 0, currentTechModule)
+
   // Gamification State
   const [xp, setXp] = useState(0)
   const [completedModules, setCompletedModules] = useState<string[]>([])
@@ -398,6 +526,32 @@ export default function InterviewAcademy() {
   const progressPct = (completedModules.length / modules.length) * 100
 
   // --- Handlers ---
+  const handleGenerateCustomPrep = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!jobText && !targetRole) return
+    setIsGenerating(true)
+    try {
+      const res = await fetch('/api/agents/tech-prep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetRole: selectedRole, jobText })
+      })
+      const data = await res.json()
+      if (data.lessons) {
+        data.lessons = data.lessons.map((l: any) => ({
+          ...l,
+          content: <div dangerouslySetInnerHTML={{ __html: l.contentHtml }} className="prose prose-slate max-w-none text-sm" />
+        }))
+        data.icon = <Code className="w-6 h-6 text-slate-700" />
+        setCustomTechModule(data)
+      }
+    } catch(error) {
+      console.error(error)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   const startModule = (mod: any) => {
     setActiveModule(mod)
     setCurrentLessonIdx(0)
@@ -472,18 +626,45 @@ export default function InterviewAcademy() {
                 className={`cursor-pointer transition-all duration-300 hover:shadow-md border-slate-200 hover:border-slate-300 overflow-hidden relative bg-white`}
                 onClick={() => startModule(mod)}
               >
-                {isCompleted && (
+                    {isCompleted && (
                   <div className="absolute top-4 right-4 text-slate-400 bg-slate-50 p-1 rounded-full border border-slate-200">
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
                 )}
-                <CardContent className="p-6">
-                  <div className={`w-12 h-12 rounded-xl border border-slate-200 shadow-sm flex items-center justify-center mb-6 bg-slate-50`}>
-                    {mod.icon}
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className={`w-12 h-12 rounded-xl border border-slate-200 shadow-sm flex items-center justify-center bg-slate-50 shrink-0`}>
+                      {mod.icon}
+                    </div>
+                    {mod.id.startsWith('technical') && !customTechModule && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <select 
+                          className="text-xs border border-slate-200 rounded-md p-1.5 bg-slate-50 text-slate-700 font-medium focus:ring-0 cursor-pointer"
+                          value={selectedRole}
+                          onChange={(e) => setSelectedRole(e.target.value)}
+                        >
+                          {Object.keys(predefinedTechModules).map(role => (
+                            <option key={role} value={role}>{role}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
+
                   <h3 className="font-bold text-xl mb-2 text-slate-900">{mod.title}</h3>
                   <p className="text-sm text-slate-500 mb-6 line-clamp-2 leading-relaxed">{mod.description}</p>
                   
+                  {mod.id.startsWith('technical') && jobText && !customTechModule && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full mb-4 h-8 text-xs bg-violet-50 text-violet-700 hover:bg-violet-100 hover:text-violet-800 border-violet-200"
+                      onClick={handleGenerateCustomPrep}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> Generating...</> : 'Generate from JD ✨'}
+                    </Button>
+                  )}
+
                   <div className="flex items-center justify-between mt-auto">
                     <div className="flex items-center text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
                       <PlayCircle className="w-3.5 h-3.5 mr-2" /> {mod.lessons.length} Lessons
