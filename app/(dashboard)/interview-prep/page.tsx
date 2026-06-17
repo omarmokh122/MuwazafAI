@@ -12,7 +12,7 @@ const modules = [
   {
     id: 'screening',
     title: 'Screening Interviews',
-    description: 'Master the initial recruiter call, phone screen, and asynchronous video interviews.',
+    description: 'Master the initial recruiter call, phone screen, and asynchronous video interviews. Note that screening interviews may also be done via video call, phone call, or evaluated mainly from the submitted application.',
     icon: <Users className="w-6 h-6 text-slate-700" />,
     lessons: [
       {
@@ -240,6 +240,54 @@ const modules = [
             </ul>
           </div>
         )
+      },
+      {
+        title: 'Adaptability & Process Change',
+        content: (
+          <div className="space-y-4">
+            <p>Interviewers want to see how you handle change. When asked about adaptability, highlight a time when a process changed unexpectedly or a project scope shifted.</p>
+            <ul className="space-y-2 mt-2">
+              <li><strong>Focus on Resilience:</strong> Explain how you stayed calm and pivoted your strategy without complaining.</li>
+              <li><strong>Embrace the New:</strong> Show that you actively adopted the new process and helped your team adjust.</li>
+            </ul>
+          </div>
+        )
+      },
+      {
+        title: 'Accountability & Impact',
+        content: (
+          <div className="space-y-4">
+            <p>Demonstrating accountability means owning your outcomes—both good and bad—and taking <strong>proactive initiative</strong>.</p>
+            <ul className="space-y-2 mt-2">
+              <li><strong>Added Value:</strong> Do not just list what you were told to do. Talk about the initiative you took beyond your job description.</li>
+              <li><strong>Ownership:</strong> Use "I" instead of "We" when describing the specific actions you took to ensure a project succeeded.</li>
+            </ul>
+          </div>
+        )
+      },
+      {
+        title: 'Time Management',
+        content: (
+          <div className="space-y-4">
+            <p>When asked how you prioritize tasks, emphasize a systematic approach.</p>
+            <ul className="space-y-2 mt-2">
+              <li>Mention tools or frameworks you use (e.g., Eisenhower Matrix, Jira, blocking calendar time).</li>
+              <li>Explain how you communicate with stakeholders when a deadline is at risk.</li>
+            </ul>
+          </div>
+        )
+      },
+      {
+        title: 'Strengths & Weaknesses',
+        content: (
+          <div className="space-y-4">
+            <p>The classic question: <em>"What are your greatest strengths and weaknesses?"</em></p>
+            <ul className="space-y-2 mt-2">
+              <li><strong>Strengths:</strong> Align them with the job description. Give a brief example of how that strength resulted in a win.</li>
+              <li><strong>Weaknesses:</strong> Mention a "negative strength" or a genuine, non-critical weakness that you are actively working to improve (e.g., "I sometimes dive too deep into the details, but I've started using time-boxing to keep myself moving forward").</li>
+            </ul>
+          </div>
+        )
       }
     ],
     quiz: {
@@ -251,6 +299,88 @@ const modules = [
       ],
       correctAnswer: 1,
       explanation: "Interviewers ask about failure to test your self-awareness and ability to learn. The 'Learning' step is the entire point of the question."
+    }
+  },
+  {
+    id: 'preparation',
+    title: 'Preparation & Etiquette',
+    description: 'Master company research, etiquette, and essential behavioral questions to stand out.',
+    icon: <Target className="w-6 h-6 text-slate-700" />,
+    lessons: [
+      {
+        title: 'Company Knowledge & Foundation',
+        content: (
+          <div className="space-y-4">
+            <p>Never walk into an interview blind. You must research the company so the interviewer knows you are genuinely interested.</p>
+            <ul className="space-y-2 mt-2">
+              <li><strong>Where to look:</strong> Read their website, latest press releases, and social media platforms (especially LinkedIn).</li>
+              <li><strong>How to apply it:</strong> Be ready to answer how your specific skills can be applied to their current foundation, products, or recent challenges.</li>
+            </ul>
+          </div>
+        )
+      },
+      {
+        title: 'Addressing CV Gaps & Profile Details',
+        content: (
+          <div className="space-y-4">
+            <p>Expect questions based directly on your profile and CV.</p>
+            <ul className="space-y-2 mt-2">
+              <li><strong>Career Gaps:</strong> Be honest but brief. Explain what you did during that time (e.g., upskilling, personal matters) and pivot quickly back to why you are ready now.</li>
+              <li><strong>Short Stints:</strong> If you were at a position for a short period, explain that it was a contract role, or that the company direction changed, without badmouthing the employer.</li>
+            </ul>
+          </div>
+        )
+      },
+      {
+        title: 'Communication & Active Listening',
+        content: (
+          <div className="space-y-4">
+            <p>Communication isn't just about speaking; it's heavily about how you listen.</p>
+            <ul className="space-y-2 mt-2">
+              <li><strong>Timing:</strong> Do not interrupt. Wait a full second after the interviewer finishes speaking before you begin.</li>
+              <li><strong>Active Listening:</strong> Nod, maintain eye contact, and reference back to things they said earlier in the conversation to show you are fully engaged.</li>
+            </ul>
+          </div>
+        )
+      },
+      {
+        title: 'The Etiquette Guide',
+        content: (
+          <div className="space-y-4">
+            <p>First impressions matter immensely. Follow these core etiquette rules:</p>
+            <ul className="space-y-2 mt-2">
+              <li><strong>Attire:</strong> Always dress formally unless explicitly told otherwise. It's better to be over-dressed than under-dressed.</li>
+              <li><strong>Preparation:</strong> Read the job description thoroughly the night before. Always bring a few printed copies of your CV.</li>
+              <li><strong>Greetings:</strong> Do not shake hands first unless the interviewer initiates it. Wait for their cue.</li>
+              <li><strong>Gratitude:</strong> Before the interview truly begins, take a moment to sincerely thank the interviewers for the opportunity and their time.</li>
+            </ul>
+          </div>
+        )
+      },
+      {
+        title: 'Tackling Common Questions',
+        content: (
+          <div className="space-y-4">
+            <p>Prepare concise, confident answers for these standard questions:</p>
+            <ul className="space-y-3 mt-2">
+              <li><strong>"Why should we hire you?"</strong> Summarize your top 3 relevant skills and how they map directly to their biggest pain point.</li>
+              <li><strong>"Why do you want to join this company?"</strong> Reference the research you did on their products/culture and express genuine enthusiasm for their mission.</li>
+              <li><strong>"How do you work under pressure?"</strong> Give a STAR example of a time you met a tight deadline by prioritizing effectively and staying calm.</li>
+              <li><strong>"Where do you see yourself in 5 years?"</strong> Align your goals with the trajectory of the role (e.g., "I see myself as a senior contributor leading projects and mentoring juniors within this department").</li>
+            </ul>
+          </div>
+        )
+      }
+    ],
+    quiz: {
+      question: "What is the proper etiquette regarding handshakes at the beginning of an in-person interview?",
+      options: [
+        "Always aggressively initiate the handshake to show dominance and confidence.",
+        "Refuse to shake hands to maintain professional distance.",
+        "Do not shake hands first; wait for the interviewer to initiate the gesture."
+      ],
+      correctAnswer: 2,
+      explanation: "Waiting for the interviewer to initiate the handshake is standard professional etiquette, especially as post-pandemic norms vary."
     }
   }
 ]
