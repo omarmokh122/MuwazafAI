@@ -4,10 +4,10 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Scale, Clock, Calendar, Shield, Briefcase, Bot, User, Send, Loader2, Sparkles, Banknote, Users, ArrowLeft, ChevronRight } from 'lucide-react'
+import { Scale, Clock, Calendar, Shield, Briefcase, Bot, User, Send, Loader2, Sparkles, Banknote, Users, ArrowLeft, ChevronRight, RefreshCw, Languages } from 'lucide-react'
 
-// --- Expanded Knowledge Base Data ---
-const rightsData = [
+// --- Fallback Knowledge Base Data (English Only) ---
+const FALLBACK_RIGHTS = [
   {
     id: 'hours',
     title: 'Working Hours & Conditions',
@@ -17,7 +17,7 @@ const rightsData = [
       { subtitle: 'Standard Working Hours', text: 'The standard maximum working hours are set at 48 hours per week, typically distributed over six days (8 hours/day).' },
       { subtitle: 'Rest Periods', text: 'Employees must have at least 9 hours of uninterrupted rest every 24 hours, and a weekly rest period of at least 36 uninterrupted hours.' },
       { subtitle: 'Overtime Pay', text: 'Overtime (hours worked beyond the 48-hour limit) must be compensated at an increased rate of 1.5x the regular hourly wage.' },
-      { subtitle: 'Part-Time & Remote', text: 'Recent 2025 amendments officially recognize and regulate part-time, seasonal, and remote work, granting these workers proportional rights to full-time employees.' }
+      { subtitle: 'Part-Time & Remote', text: 'Recent amendments officially recognize and regulate part-time, seasonal, and remote work, granting these workers proportional rights to full-time employees.' }
     ]
   },
   {
@@ -26,9 +26,9 @@ const rightsData = [
     icon: <Banknote className="w-6 h-6 text-slate-700" />,
     summary: 'Official minimum wages, daily rates, and allowances.',
     details: [
-      { subtitle: 'National Minimum Wage', text: 'As of mid-2025, the national monthly minimum wage is LBP 28,000,000 for regular full-time employees in the private sector.' },
-      { subtitle: 'Daily Workers', text: 'For employees paid on a daily basis, the legal minimum rate is LBP 1,300,000 per day.' },
-      { subtitle: 'Transportation Allowance', text: 'Employers are legally required to pay a daily transportation allowance for each day of actual work. This rate is periodically adjusted by the Ministry of Labor based on fuel costs.' },
+      { subtitle: 'National Minimum Wage', text: 'The national monthly minimum wage is determined by official decrees and must be sufficient to meet the essential needs of the employee and their family.' },
+      { subtitle: 'Daily Workers', text: 'For employees paid on a daily basis, the law specifies a legal minimum daily rate.' },
+      { subtitle: 'Transportation Allowance', text: 'Employers are legally required to pay a daily transportation allowance for each day of actual work, adjusted periodically by the Ministry of Labor.' },
       { subtitle: 'Family Allowance', text: 'Employees registered with the NSSF are eligible to receive monthly family allowances based on marital status and the number of dependent children.' }
     ]
   },
@@ -38,21 +38,21 @@ const rightsData = [
     icon: <Calendar className="w-6 h-6 text-slate-700" />,
     summary: 'Annual, sick, maternity, and bereavement leave rights.',
     details: [
-      { subtitle: 'Annual Leave', text: 'Employees are entitled to a minimum of 15 paid working days of annual leave after completing their first full year of continuous service. Accumulation is typically capped at two consecutive years.' },
-      { subtitle: 'Sick Leave', text: 'Sick leave scales with tenure. For example, employees with 3 months to 2 years of service get 15 days at full pay and 15 days at half pay. This increases up to 2.5 months full pay for employees with over 10 years of service.' },
-      { subtitle: 'Maternity Leave', text: 'Female employees are entitled to 10 weeks of fully paid maternity leave, which can be taken before and after delivery.' },
-      { subtitle: 'Paternity & Family Leave', text: 'Fathers are entitled to 3 days of paid paternity leave. Bereavement leave is typically granted for 2 days upon the death of an immediate family member.' }
+      { subtitle: 'Annual Leave', text: 'Employees are entitled to a minimum of 15 paid working days of annual leave after completing their first full year of continuous service.' },
+      { subtitle: 'Sick Leave', text: 'Sick leave scales with tenure, providing full and half pay tiers based on the duration of service.' },
+      { subtitle: 'Maternity Leave', text: 'Female employees are entitled to 10 weeks of fully paid maternity leave, covering the period before and after delivery.' },
+      { subtitle: 'Bereavement Leave', text: 'Employees are entitled to 2 days of paid leave in the event of the death of an immediate family member.' }
     ]
   },
   {
-    id: 'women_youth',
+    id: 'protections',
     title: 'Women & Youth Protections',
     icon: <Users className="w-6 h-6 text-slate-700" />,
     summary: 'Anti-discrimination laws and protections for youth.',
     details: [
       { subtitle: 'Equal Pay & Discrimination', text: 'The law strictly prohibits discrimination between men and women regarding wages, promotions, and professional qualifications for the same work.' },
-      { subtitle: 'Hazardous Work Prohibition', text: 'Women and adolescents (under 18) are legally prohibited from engaging in dangerous or hazardous industries, such as underground mining, handling explosives, or severe chemical manufacturing.' },
-      { subtitle: 'Youth Employment', text: 'The employment of children under 13 is strictly forbidden. Adolescents (13-18 years old) are subject to strict limits: a maximum of 6 hours of work per day, mandatory rest breaks, and an absolute prohibition on night shifts.' }
+      { subtitle: 'Hazardous Work Prohibition', text: 'Women and adolescents (under 18) are legally prohibited from engaging in dangerous or hazardous industries.' },
+      { subtitle: 'Youth Employment', text: 'The employment of children under 13 is strictly forbidden. Adolescents (13-18 years old) are subject to strict limits on work hours and night shifts.' }
     ]
   },
   {
@@ -61,9 +61,9 @@ const rightsData = [
     icon: <Briefcase className="w-6 h-6 text-slate-700" />,
     summary: 'Rules on firing, notice periods, and indemnity pay.',
     details: [
-      { subtitle: 'End-of-Service Indemnity', text: 'A mandatory right. If an employee resigns after 20 years or is terminated without fault, they are entitled to 1 month of their last salary for every year of service, processed through the NSSF.' },
-      { subtitle: 'Notice Periods', text: 'Before terminating an indefinite contract, written notice must be provided. It scales with tenure: 1 month (under 3 years), 2 months (3-6 years), 3 months (6-12 years), and 4 months (over 12 years).' },
-      { subtitle: 'Abusive Termination', text: 'If an employee is fired arbitrarily or without a valid legal or economic cause, they can claim compensation ranging from 2 to 12 months of wages via the Labor Arbitration Council.' }
+      { subtitle: 'End-of-Service Indemnity', text: 'If an employee resigns after 20 years or is terminated without fault, they are entitled to severance compensation, typically calculated as 1 month of their last salary for every year of service.' },
+      { subtitle: 'Notice Periods', text: 'Before terminating an indefinite contract, written notice must be provided, scaling from 1 to 4 months depending on tenure.' },
+      { subtitle: 'Abusive Termination', text: 'Arbitrary firing without a valid legal or economic cause entitles the worker to compensation ranging from 2 to 12 months of wages.' }
     ]
   },
   {
@@ -72,23 +72,97 @@ const rightsData = [
     icon: <Shield className="w-6 h-6 text-slate-700" />,
     summary: 'Arbitration councils, complaints, and social security.',
     details: [
-      { subtitle: 'Labor Arbitration Council', text: 'A specialized court for individual labor disputes (e.g., unpaid wages, unfair dismissal). It is designed to be accessible, informal, and generally free of court fees for workers.' },
-      { subtitle: 'Ministry of Labor Complaints', text: 'Before going to arbitration, workers can file a grievance with the Ministry of Labor, which will attempt to mediate and resolve the dispute amicably.' },
-      { subtitle: 'NSSF Mandatory Registration', text: 'Employers MUST register all eligible employees with the National Social Security Fund (NSSF) within one month of employment. It covers sickness, maternity, family allowances, and end-of-service indemnities.' }
+      { subtitle: 'Labor Arbitration Council', text: 'A specialized court for individual labor disputes. It is designed to be accessible, informal, and generally free of court fees for workers.' },
+      { subtitle: 'Ministry of Labor Complaints', text: 'Before going to arbitration, workers can file a grievance with the Ministry of Labor for mediation.' },
+      { subtitle: 'NSSF Mandatory Registration', text: 'Employers must register all eligible employees with the NSSF within one month of employment.' }
     ]
   }
 ]
 
-export default function LaborRightsPage() {
-  const [activeTopicId, setActiveTopicId] = useState<string | null>(null)
-  const activeTopic = rightsData.find(t => t.id === activeTopicId)
+const iconMap: Record<string, React.ReactNode> = {
+  hours: <Clock className="w-6 h-6 text-slate-700" />,
+  wages: <Banknote className="w-6 h-6 text-slate-700" />,
+  leave: <Calendar className="w-6 h-6 text-slate-700" />,
+  protections: <Users className="w-6 h-6 text-slate-700" />,
+  women_youth: <Users className="w-6 h-6 text-slate-700" />,
+  severance: <Briefcase className="w-6 h-6 text-slate-700" />,
+  disputes: <Shield className="w-6 h-6 text-slate-700" />
+}
 
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([
+export default function LaborRightsPage() {
+  const [rightsData, setRightsData] = useState<any[]>([])
+  const [loadingData, setLoadingData] = useState(true)
+  const [language, setLanguage] = useState<'en' | 'ar'>('en')
+  const [syncing, setSyncing] = useState(false)
+  const [activeTopicId, setActiveTopicId] = useState<string | null>(null)
+
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
     { role: 'assistant', content: "Hello! I am your AI Labor Consultant. Do you have any questions about your rights under the Lebanese Labor Law?" }
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await fetch('/api/labor-rights')
+        if (!res.ok) throw new Error('Failed to fetch rights')
+        const data = await res.json()
+        if (data && data.categories) {
+          setRightsData(data.categories)
+        }
+      } catch (e) {
+        console.error('Failed to load rights data:', e)
+      } finally {
+        setLoadingData(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const res = await fetch('/api/labor-rights?sync=true')
+      const data = await res.json()
+      if (res.ok && data.success) {
+        const dataRes = await fetch('/api/labor-rights')
+        const freshData = await dataRes.json()
+        if (freshData && freshData.categories) {
+          setRightsData(freshData.categories)
+        }
+        alert(data.message)
+      } else {
+        alert(data.message || 'Sync completed but no update was required.')
+      }
+    } catch (e) {
+      console.error(e)
+      alert('Failed to connect to sync server')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const getLocalizedRights = () => {
+    if (rightsData.length === 0) {
+      return FALLBACK_RIGHTS
+    }
+    
+    return rightsData.map(cat => ({
+      id: cat.id,
+      title: language === 'en' ? cat.title_en : cat.title_ar,
+      icon: iconMap[cat.id] || <Shield className="w-6 h-6 text-slate-700" />,
+      summary: language === 'en' ? cat.summary_en : cat.summary_ar,
+      details: cat.details.map((det: any) => ({
+        subtitle: language === 'en' ? det.subtitle_en : det.subtitle_ar,
+        text: (language === 'en' ? det.text_en : det.text_ar) + (det.article ? ` (${language === 'en' ? 'Article' : 'المادة'} ${det.article})` : '')
+      }))
+    }))
+  }
+
+  const localizedRights = getLocalizedRights()
+  const activeTopic = localizedRights.find(t => t.id === activeTopicId)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -147,13 +221,46 @@ export default function LaborRightsPage() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">Empower yourself with knowledge. Understand your rights under the Lebanese Labor Law.</p>
         </div>
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setLanguage(lang => lang === 'en' ? 'ar' : 'en')}
+            className="flex items-center gap-1.5 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm"
+          >
+            <Languages className="w-4 h-4 text-slate-500" />
+            <span>{language === 'en' ? 'العربية' : 'English'}</span>
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-1.5 bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm"
+          >
+            {syncing ? (
+              <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
+            ) : (
+              <RefreshCw className="w-4 h-4 text-slate-500" />
+            )}
+            <span>Sync with Gov PDF</span>
+          </Button>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-6 flex-1 min-h-0">
         
         {/* Left Column: Knowledge Base */}
         <div className="lg:col-span-3 flex flex-col min-h-0">
-          {activeTopic ? (
+          {loadingData ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-white border border-slate-200 rounded-xl p-8">
+              <Loader2 className="w-8 h-8 animate-spin text-slate-400 mb-2" />
+              <p className="text-sm text-slate-500">Loading official labor law categories...</p>
+            </div>
+          ) : activeTopic ? (
             <div className="flex flex-col min-h-0 h-full animate-fade-in bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden relative">
               <div className="bg-slate-50 border-b border-slate-100 p-4 shrink-0 flex items-center gap-4 sticky top-0 z-10">
                 <Button variant="outline" size="icon" onClick={() => setActiveTopicId(null)} className="shrink-0 h-8 w-8 bg-white hover:bg-slate-100">
@@ -171,7 +278,7 @@ export default function LaborRightsPage() {
               </div>
               
               <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {activeTopic.details.map((detail, idx) => (
+                {activeTopic.details.map((detail: any, idx: number) => (
                   <div key={idx} className="relative">
                     <h3 className="font-semibold text-slate-800 text-sm mb-2 flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
@@ -188,7 +295,7 @@ export default function LaborRightsPage() {
             <div className="flex flex-col min-h-0 h-full animate-fade-in">
               <h2 className="text-lg font-bold text-slate-900 mb-3 shrink-0">Legal Categories</h2>
               <div className="grid sm:grid-cols-2 gap-3 overflow-y-auto pr-2 pb-2">
-                {rightsData.map(section => (
+                {localizedRights.map(section => (
                   <Card 
                     key={section.id} 
                     onClick={() => setActiveTopicId(section.id)}
@@ -222,7 +329,7 @@ export default function LaborRightsPage() {
             </div>
           )}
         </div>
-
+ 
         {/* Right Column: AI Consultant */}
         <div className="lg:col-span-2 flex flex-col min-h-0 h-full">
           <Card className="flex-1 flex flex-col border-slate-200 shadow-md relative overflow-hidden bg-white">
@@ -259,7 +366,7 @@ export default function LaborRightsPage() {
                         : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'
                     }`}>
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm prose-slate max-w-none whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                        <div className="prose prose-sm prose-slate max-w-none whitespace-pre-wrap animate-fade-in" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
                       ) : (
                         msg.content
                       )}
@@ -283,7 +390,7 @@ export default function LaborRightsPage() {
               )}
               <div ref={messagesEndRef} />
             </CardContent>
-
+ 
             <div className="p-4 bg-white border-t border-slate-100 shrink-0">
               <form 
                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
@@ -303,7 +410,7 @@ export default function LaborRightsPage() {
             </div>
           </Card>
         </div>
-
+ 
       </div>
     </div>
   )

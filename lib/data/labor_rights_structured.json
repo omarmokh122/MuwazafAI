@@ -1,0 +1,256 @@
+```json
+{
+  "categories": [
+    {
+      "id": "hours",
+      "title_en": "Working Hours & Conditions",
+      "title_ar": "ساعات وظروف العمل",
+      "summary_en": "This category outlines the maximum permissible working hours, mandatory rest periods including daily breaks and weekly rest, and rules for overtime compensation in Lebanon, as per the Labor Law.",
+      "summary_ar": "يحدد هذا القسم الحد الأقصى لساعات العمل المسموح بها، وفترات الراحة الإلزامية بما في ذلك الاستراحات اليومية والراحة الأسبوعية، وقواعد تعويض العمل الإضافي في لبنان، وفقًا لقانون العمل.",
+      "details": [
+        {
+          "subtitle_en": "Maximum Weekly Working Hours",
+          "subtitle_ar": "الحد الأقصى لساعات العمل الأسبوعية",
+          "text_en": "The maximum working hours per week are 48 hours in the unions specified in Article 5, excluding agricultural unions.",
+          "text_ar": "ان الحد الاعلى للعمل في الاسبوع هو ٤٨ ساعة في النقابات المبينة في المادة الخامسة ما خلا النقابات الزراعية.",
+          "article": "31"
+        },
+        {
+          "subtitle_en": "Overtime Compensation",
+          "subtitle_ar": "تعويض العمل الإضافي",
+          "text_en": "The wage for overtime hours worked by the employee must be 50 percent more than the ordinary hourly wage.",
+          "text_ar": "ان يكون اجر الساعات الاضافية التي اشتغل فيها الاجير ٥٠ بالمئة زيادة عن أجر الساعات العادية",
+          "article": "33"
+        },
+        {
+          "subtitle_en": "Daily Breaks and Rest Periods",
+          "subtitle_ar": "فترات الراحة اليومية",
+          "text_en": "Whenever working hours exceed six for men and five for women, the employer must grant their employees a break of no less than one hour at midday. The employee is also entitled to nine consecutive hours of rest within every twenty-four hours, except in cases required by working conditions.",
+          "text_ar": "كلما زادت ساعات العمل على ست للرجال وخمس للنساء وجب على رب العمل أن يمنح اجراءه عند منتصف نهار العمل راحة لا يجوز أن تقل عن ساعة. يتمتع الاجير في كل أربع وعشرين ساعة بالراحة تسع ساعات متوالية ما عدا الاحوال التي تستلزمها ظروف العمل",
+          "article": "34"
+        },
+        {
+          "subtitle_en": "Weekly Rest Period",
+          "subtitle_ar": "فترة الراحة الأسبوعية",
+          "text_en": "All employees must be granted a weekly rest of no less than 36 consecutive hours. The employer may choose the day of this rest and distribute it among employees according to the demands of work.",
+          "text_ar": "يجب أن يمنح جميع الاجراء راحة اسبوعية لا تقل عن ٣٦ ساعة بدون انقطاع. لرب العمل ان يختار يوم هذه الراحة وان يوزعها بين الاجراء حسب مقتضيات العمل",
+          "article": "36"
+        }
+      ]
+    },
+    {
+      "id": "wages",
+      "title_en": "Minimum Wage & Compensation",
+      "title_ar": "الحد الأدنى للأجور والتعويضات",
+      "summary_en": "This section covers the legal framework for minimum wage determination, payment frequency, the principle of wage sufficiency, and the protected status of wages in cases of bankruptcy, ensuring fair compensation practices.",
+      "summary_ar": "يغطي هذا القسم الإطار القانوني لتحديد الحد الأدنى للأجور، وتواتر الدفع، ومبدأ كفاية الأجور، ووضع الأجور المحمي في حالات الإفلاس، مما يضمن ممارسات تعويض عادلة.",
+      "details": [
+        {
+          "subtitle_en": "Sufficiency and Official Minimum Wage",
+          "subtitle_ar": "كفاية الحد الأدنى للأجور والرسمية",
+          "text_en": "The minimum wage must be sufficient to cover the essential needs of the employee and their family, taking into account the type of work, and must not be less than the official minimum wage.",
+          "text_ar": "يجب ان يكون الحد الادنى من الاجر كافيا ليسد حاجات الاجير الضرورية وحاجات عائلته على أن يؤخذ بعين الاعتبار نوع العمل ويجب ان لا يقل عن الحد الادنى الرسمي",
+          "article": "44"
+        },
+        {
+          "subtitle_en": "Determination of Minimum Wage",
+          "subtitle_ar": "تحديد الحد الأدنى للأجور",
+          "text_en": "The minimum wage is determined by committees representing the Ministry of Labor, employers, and employees.",
+          "text_ar": "يقوم بتحديد الحد الادنى لجان تمثل فيها وزارة العمل وارباب العمل والاجراء",
+          "article": "45"
+        },
+        {
+          "subtitle_en": "Wage Payment Method and Frequency",
+          "subtitle_ar": "طريقة وتواتر دفع الأجور",
+          "text_en": "Wages, if not in kind, must be paid in the official currency, notwithstanding any conflicting text, and must be paid once a month for employees (users) and at least twice a month for workers (عمال).",
+          "text_ar": "يجب ان تدفع الاجور، اذا لم تكن عينا، بالعملة الرسمية بالرغم من كل نص مخالف، وان تدفع مرة في الشهر للمستخدمين ومرتين للعمال على الاقل.",
+          "article": "47"
+        },
+        {
+          "subtitle_en": "Priority of Wages",
+          "subtitle_ar": "أولوية الأجور",
+          "text_en": "Employees' wages for the last year are considered privileged debts and are ranked after treasury debts, judicial expenses, and compulsory insurance. This principle also applies in cases of bankruptcy.",
+          "text_ar": "رواتب الاجراء عن السنة الاخيرة هي من الديون الممتازة وتصنف بعد دين الخزينة والمصارفات القضائية والتأمينات الجبرية . ويطبق هذا المبدأ في حالات الافلاس ايضا",
+          "article": "48"
+        },
+        {
+          "subtitle_en": "Invalidity of Agreements Waiving Wage Rights",
+          "subtitle_ar": "بطلان الاتفاقيات المتنازلة عن حقوق الأجور",
+          "text_en": "Any clause in an employment contract, and generally any agreement made between the employer and the employee before or during its term, that aims to waive or reduce the wages due to the employee under the provisions of Chapter Four related to wages shall be null and void.",
+          "text_ar": "كل نص في عقد اجارة الخدمة وبصورة عامة كل اتفاق يعقد بين رب العمل والاجير قبل العمل وخلال مدته يراد به اسقاط احكام الفصل الرابع المتعلق بالاجور او تخفيض المبلغ الذي يحق للاجير بمقتضى هذه الاحكام يكون باطلا حكما",
+          "article": "59"
+        }
+      ]
+    },
+    {
+      "id": "leave",
+      "title_en": "Leave Entitlements",
+      "title_ar": "الإجازات والعطل",
+      "summary_en": "This category details various types of leave entitlements for employees, including paid annual leave, special leave for family events, and sick leave provisions, along with protections against dismissal during these periods.",
+      "summary_ar": "يفصل هذا القسم أنواع الإجازات المستحقة للموظفين، بما في ذلك الإجازة السنوية المدفوعة، والإجازة الخاصة للمناسبات العائلية، وأحكام الإجازة المرضية، بالإضافة إلى الحماية من الفصل أثناء هذه الفترات.",
+      "details": [
+        {
+          "subtitle_en": "Special Paid Leave for Family Events",
+          "subtitle_ar": "إجازة خاصة مدفوعة للمناسبات العائلية",
+          "text_en": "Every employee is entitled to two days of fully paid leave upon the death of their father, mother, spouse, one of their children, grandchildren, or one of their grandparents.",
+          "text_ar": "يحق لكل اجير فقد اباه او امه او زوجه او احد اولاده واحفاده او احد جدوده وجداته اجازة يومين بأجر كامل",
+          "article": "38"
+        },
+        {
+          "subtitle_en": "Annual Paid Leave",
+          "subtitle_ar": "الإجازة السنوية المدفوعة",
+          "text_en": "Every employee is entitled to fifteen days of fully paid annual leave, provided they have been employed in the establishment for at least one year. The employer may choose the dates of these leaves according to the requirements of the service. The employer may not dismiss the employee or issue a notice of dismissal during the leave.",
+          "text_ar": "لكل اجير الحق في اجازة سنوية خمسة عشر يوما بأجر كامل بشرط ان يكون مستخدما في المؤسسة منذ سنة على الاقل. لرب العمل ان يختار تاريخ هذه الاجازات بحسب مقتضيات الخدمة. وليس له ان يصرف الاجير ولا ان يوجه اليه علم الصرف خلال الاجازة",
+          "article": "39"
+        },
+        {
+          "subtitle_en": "Sick Leave Entitlement (Amended)",
+          "subtitle_ar": "استحقاق الإجازة المرضية (معدل)",
+          "text_en": "If an employee is afflicted with an illness not resulting from their service or work accidents, they are entitled to sick leave as follows: half a month with full pay and half a month with half pay for service from three months up to two years; two and a half months with full pay and two and a half months with half pay for service exceeding ten years.",
+          "text_ar": "اذا اصيب الاجير بمرض غير الامراض الناجمة عن خدمته وحوادث العمل المنصوص عليها في المرسوم الاشتراعي رقم ٢٥ تاريخ ٤ ايار ١٩٤٣ ، فله الحق باجازة مرضية تحدد على الوجه التالي: انصف شهر بأجر كامل، ونصف شهر بنصف أجر، للاجير الذي قضى في الخدمة مدة ثلاثة أشهر واكثر حتى سنتين. ... ه شهران ونصف الشهر بأجر كامل، وشهران ونصف الشهر بنصف أجر، للاجير الذي تفوق خدمته العشر سنوات",
+          "article": "40"
+        },
+        {
+          "subtitle_en": "Protection Against Dismissal During Sick Leave",
+          "subtitle_ar": "الحماية من الفصل أثناء الإجازة المرضية",
+          "text_en": "The employer may not dismiss the employee or issue a notice of dismissal during sick leave.",
+          "text_ar": "ليس لرب العمل ان يصرف الاجير من الخدمة ولا ان يوجه اليه علم الصرف اثناء الاجازة المرضية",
+          "article": "42"
+        }
+      ]
+    },
+    {
+      "id": "protections",
+      "title_en": "Women & Youth Protections",
+      "title_ar": "حماية النساء والأحداث",
+      "summary_en": "This section outlines specific legal protections for women and adolescents (minors), including prohibitions on child labor, restrictions on hazardous work, gender non-discrimination, special working hour regulations for youth, and entitlements for maternity leave.",
+      "summary_ar": "يحدد هذا القسم الحمايات القانونية الخاصة للنساء والأحداث (القصر)، بما في ذلك حظر عمالة الأطفال، والقيود على العمل الخطير، وعدم التمييز بين الجنسين، وتنظيم ساعات العمل الخاصة بالشباب، واستحقاقات إجازة الأمومة.",
+      "details": [
+        {
+          "subtitle_en": "Prohibition of Child Labor and Medical Examination for Adolescents (Amended)",
+          "subtitle_ar": "حظر عمالة الأطفال والفحص الطبي للأحداث (معدل)",
+          "text_en": "It is absolutely prohibited to employ adolescents before they complete the age of thirteen. An adolescent must not be employed before undergoing a medical examination to ensure their fitness for the work they are employed to perform. Medical certificates are provided free of charge by the Ministry of Public Health and renewed annually until the adolescent completes the age of eighteen. They can be revoked at any time if the adolescent is subsequently found unfit for the work they were employed for.",
+          "text_ar": "يحظر بصورة مطلقة استخدام الاحداث قبل اكمالهم سن الثالثة عشرة ويجب الا يستخدم الحدث قبل اجراء فحص طبي للتأكد من لياقته للقيام بالاعمال التي يستخدم لادائها. تعطى الشهادات الطبية مجانا من وزارة الصحة العامة وتجدد سنويا حتى اكمال الحدث سن الثامنة عشرة . ويمكن الغاؤها في أي وقت اذا ثبت بعد ذلك عدم لياقة الحدث للقيام بالعمل الذي استخدم من أجله",
+          "article": "22"
+        },
+        {
+          "subtitle_en": "Working Hours and Rest for Adolescents (Amended)",
+          "subtitle_ar": "ساعات العمل والراحة للأحداث (معدل)",
+          "text_en": "It is prohibited to employ adolescents under eighteen years of age for more than six hours a day, including at least one hour of rest if daily working hours exceed four consecutive hours. Their employment is also prohibited between 7 PM and 7 AM. Adolescents must be granted a rest period of no less than 13 consecutive hours between each two working periods. They are absolutely prohibited from being assigned overtime work or being employed during daily and weekly rest periods, or during holidays and occasions on which the establishment is closed. Every adolescent is entitled to twenty-one days of fully paid annual leave, provided they have been employed in the establishment for at least one year.",
+          "text_ar": "ويحظر تشغيل الاحداث الذين يقل سنهم عن الثامنة عشرة أكثر من ست ساعات يوميا، يتخللها ساعة للراحة على الاقل اذا تجاوزت ساعات العمل اليومية اربع ساعات متواصلة، كما يحظر تشغيلهم في الفترة الممتدة بين السابعة ليلا والسابعة صباحا. ويجب منح الحدث فترة من الراحة لا تقل عن ١٣ ساعة متعاقبة بين كل فترتي عمل، كما يحظر بصورة مطلقة تكليفه بعمل اضافي او تشغيله خلال فترات الراحة اليومية والاسبوعية، او خلال الاعياد والمناسبات التي تعطلها المؤسسة. لكل حدث الحق باجازة سنوية مدتها واحد وعشرون يوما بأجر كامل بشرط ان يكون مستخدما في المؤسسة منذ سنة على الاقل.",
+          "article": "23"
+        },
+        {
+          "subtitle_en": "Gender Non-Discrimination (Amended)",
+          "subtitle_ar": "عدم التمييز بين الجنسين (معدل)",
+          "text_en": "The employer is prohibited from discriminating based on gender between male and female workers regarding the type of work, amount of wage, employment, promotion, professional qualification, and attire.",
+          "text_ar": "يحظر على صاحب العمل التفرقة بسبب الجنس بين العامل والعاملة في ما يخص نوع العمل، مقدار الاجر، التوظيف الترقية، الترفيع، التأهيل المهني والملبس",
+          "article": "26"
+        },
+        {
+          "subtitle_en": "Prohibition of Women's Employment in Certain Industries",
+          "subtitle_ar": "حظر تشغيل النساء في صناعات معينة",
+          "text_en": "The employment of women in the industries and works specified in Annex 1 of this Law is prohibited. Annex 1 lists industries such as underground work in mines, manufacturing of explosives, and cleaning factories where such hazardous work is performed.",
+          "text_ar": "يحظر تشغيل النساء في الصناعات والاعمال المبينة في الملحق رقم 1 من هذا القانون. (الملحق رقم 1 يدرج صناعات مثل العمل تحت سطح الارض في المناجم والمقالع، صنع المتفجرات، تنظيف المعامل التي تجري فيها أعمال خطرة).",
+          "article": "27 & Annexe 1"
+        },
+        {
+          "subtitle_en": "Maternity Leave and Pay (Amended)",
+          "subtitle_ar": "إجازة الأمومة والأجر (معدل)",
+          "text_en": "Working women are entitled to maternity leave of seven weeks, covering the period before and after childbirth, upon presenting a medical certificate. Full wages are paid during maternity leave. It is prohibited to dismiss a woman from service or issue her a notice of dismissal during the maternity period, unless it is proven that she was employed elsewhere during the said period.",
+          "text_ar": "يحق للنساء العاملات في جميع الفئات المبينة في هذا القانون، ان ينلن اجازة امومة لمدة سبعة اسابيع تشمل المدة التي تتقدم الولادة والمدة التي تليها. وذلك بابراز هن شهادة طبية تنم عن تاريخ الولادة المحتمل. تدفع الاجرة بكاملها للمرأة اثناء اجازة الامومة. ويحظر ان تصرف المرأة من الخدمة او ان يوجه اليها الانذار خلال مدة الولادة، ما لم يثبت انها استخدمت في محل آخر خلال المدة المذكورة .",
+          "article": "28, 29"
+        }
+      ]
+    },
+    {
+      "id": "severance",
+      "title_en": "Termination & Severance",
+      "title_ar": "نهاية الخدمة والتسريح",
+      "summary_en": "This category details the legal provisions surrounding the termination of employment contracts, specifying notice periods, grounds for lawful and abusive dismissal, compensation for unfair termination, and severance pay calculations, including employee rights at retirement.",
+      "summary_ar": "يفصل هذا القسم الأحكام القانونية المتعلقة بإنهاء عقود العمل، ويحدد فترات الإنذار، وأسباب الفصل المشروع والتعسفي، وتعويض الفصل غير المشروع، وحساب تعويض نهاية الخدمة، بما في ذلك حقوق الموظفين عند التقاعد.",
+      "details": [
+        {
+          "subtitle_en": "Termination of Indefinite Contracts and Compensation for Abusive Termination (Amended)",
+          "subtitle_ar": "إنهاء عقود العمل غير المحددة وتعويض الفصل التعسفي (معدل)",
+          "text_en": "Both the employer and the employee have the right to terminate an indefinite employment contract at any time. If the termination is initiated by the employer due to abuse of right, compensation is assessed based on factors like type of work, age, length of service, family status, and the extent of damage, and must not be less than two months' wages and not exceed twelve months' wages, in addition to any legal entitlements the employee may have.",
+          "text_ar": "يحق لكل من صاحب العمل والعامل ان يفسخ في كل حين عقد الاستخدام المعقود بينهما لمدة غير معينة. على انه في حال الاساءة أو التجاوز في استعمال هذا الحق، يحق للفريق المتضرر ان يطالب بتعويض يقدر وفقا للاسس الآتية: - اذا كان الفسخ صادرا من قبل صاحب العمل يقدر التعويض على اساس نوع عمل العامل، وسنه، ومدة خدمته، ووضعه العائلي والصحي، ومقدار الضرر، ومدى الاساءة في استعمال الحق، على ان لا ينقص التعويض الذي يحكم به عن بدل أجرة شهرين وان لا يزيد عن بدل اجرة اثني عشر شهرا، وذلك بالاضافة لما قد يستحقه العامل من تعويضات قانونية نتيجة لفصله من الخدمة.",
+          "article": "50 (A)"
+        },
+        {
+          "subtitle_en": "Notice Periods for Termination (Amended)",
+          "subtitle_ar": "فترات الإنذار لإنهاء الخدمة (معدل)",
+          "text_en": "Both the employer and the employee must give written notice of termination: one month for service up to three years; two months for service more than three but less than six years; three months for service more than six but less than twelve years; and four months for service of twelve years or more.",
+          "text_ar": "يجب على كل من صاحب العمل والعامل ان يعلم الآخر برغبته في فسخ العقد، قبل شهر واحد اذا كان قد مضى على تنفيذ عقد الاستخدام مدة ثلاث سنوات فما دون، وقبل شهرين اذا كان قد مضى أكثر من ثلاث سنوات وأقل من ست سنوات، وقبل ثلاثة اشهر اذا كان قد مضى أكثر من ست سنوات واقل من اثنتي عشرة سنة، وقبل اربعة اشهر اذا كان قد مضى اثنتا عشرة سنة فأكثر. ويجب ان يكون الانذار خطيا، وان يبلغ الى صاحب العلاقة.",
+          "article": "50 (C)"
+        },
+        {
+          "subtitle_en": "Grounds for Abusive Dismissal (Amended)",
+          "subtitle_ar": "أسباب الفصل التعسفي (معدل)",
+          "text_en": "Dismissal is considered abusive if the reason is unacceptable or not related to the employee's competence or conduct, or if it is due to the employee's union membership or legitimate union activities, or for exercising personal or public freedoms within the law.",
+          "text_ar": "يعتبر الصرف من قبيل الاساءة او التجاوز في استعمال الحق اذا تم في الحالات التالية: السبب غير مقبول او لا يرتبط بأهلية العامل او تصرفه داخل المؤسسة... لانتساب العامل او عدم انتسابه لنقابة مهنية معينة او لقيامه بنشاط نقابي مشروع... لممارسته حرياته الشخصية او العامة ضمن نطاق القوانين المرعية الاجراء.",
+          "article": "50 (D)"
+        },
+        {
+          "subtitle_en": "Severance Pay (Pending Social Security Legislation)",
+          "subtitle_ar": "تعويض نهاية الخدمة (ريثما يسن تشريع الضمان الاجتماعي)",
+          "text_en": "Until social security legislation is enacted, the employer must pay an employee dismissed for any reason not mentioned in Article 74 severance compensation equivalent to one month's wage for each year of service, and half a month's wage if the service period is less than one year. Severance compensation may not exceed ten months' salary for certain professions.",
+          "text_ar": "الى ان يسن تشريع الضمان الاجتماعي على رب العمل ان يدفع للاجير المصروف من الخدمة لأي سبب من الاسباب غير المذكورة في المادة ٧٤ تعويض صرف يعادل أجرة شهر عن كل سنة خدمة وأجرة نصف شهر اذا كانت مدة الخدمة اقل من سنة . لا يجوز ان يتجاوز تعويض الصرف راتب عشرة اشهر ايا كان عدد سني الخدمة للاجراء الذين يشتغلون لدى اصحاب المهن الحرة والحرف وصناعات المشغل.",
+          "article": "54"
+        },
+        {
+          "subtitle_en": "Employee's Right to Request Termination at Retirement Age/Service Years (Amended)",
+          "subtitle_ar": "حق الأجير في طلب إنهاء الخدمة عند بلوغ سن التقاعد/سنوات الخدمة (معدل)",
+          "text_en": "An employee who has reached sixty years of age or has completed twenty-five years of service in the same establishment has the right to request dismissal and benefit from severance compensation. The employee also has the right to continue working until they reach sixty-four years of age, at which point their subjection to the Labor Law and severance system ends, unless internal regulations or a collective agreement permit otherwise.",
+          "text_ar": "١ للاجير البالغ من العمر ستين عاما ۲ أو له خمس وعشرون سنة خدمة في المحل عينه ان يطلب صرفه من الخدمة وان يستفيد من تعويض الصرف. كما وللاجير نفسه الحق في الاستمرار في العمل ولغاية بلوغه سن الرابعة والستين مكتملة بحيث ينتهي حكما خضوعه لاحكام قانون العمل وبالتالي لنظام تعويض الصرف من الخدمة ما لم يكن النظام الداخلي للمؤسسة التي يعمل فيها او عقد العمل الجماعي يسمحان له بالعمل الى ما بعد سن الرابعة والستين.",
+          "article": "55"
+        }
+      ]
+    },
+    {
+      "id": "disputes",
+      "title_en": "Disputes & NSSF",
+      "title_ar": "النزاعات والضمان الاجتماعي",
+      "summary_en": "This category describes the role and jurisdiction of the Labor Arbitration Councils in resolving disputes between employers and employees, including matters related to minimum wages, work accidents, and dismissals. It also references social security legislation.",
+      "summary_ar": "يصف هذا القسم دور واختصاص مجالس العمل التحكيمية في تسوية النزاعات بين أصحاب العمل والموظفين، بما في ذلك المسائل المتعلقة بالحد الأدنى للأجور، وحوادث العمل، والفصل من الخدمة. كما يشير إلى تشريع الضمان الاجتماعي.",
+      "details": [
+        {
+          "subtitle_en": "Mention of Social Security (NSSF) Legislation",
+          "subtitle_ar": "إشارة إلى تشريع الضمان الاجتماعي",
+          "text_en": "Until social security legislation is enacted, the employer must pay an employee dismissed for any reason not mentioned in Article 74, severance compensation.",
+          "text_ar": "الى ان يسن تشريع الضمان الاجتماعي على رب العمل ان يدفع للاجير المصروف من الخدمة لأي سبب من الاسباب غير المذكورة في المادة ٧٤ تعويض صرف.",
+          "article": "54"
+        },
+        {
+          "subtitle_en": "Establishment and Composition of Arbitration Council (Amended)",
+          "subtitle_ar": "تأسيس وتكوين مجلس التحكيم (معدل)",
+          "text_en": "One or more labor arbitration councils shall be established in the center of each governorate to consider disputes, composed of a judge as president, a representative of employers, and a representative of employees.",
+          "text_ar": "ينشأ في مركز كل محافظة للنظر بالنزاعات المشار اليها في المادة الأولى من هذا القانون ۲ مجلس عمل تحكيمي واحد أو اكثر يؤلف على الوجه التالي: قاض من الدرجة الحادية عشرة وما فوق - رئيسا . ممثل عن ارباب العمل وممثل عن الاجراء - عضوين.",
+          "article": "77"
+        },
+        {
+          "subtitle_en": "Jurisdiction of the Arbitration Council",
+          "subtitle_ar": "اختصاص مجلس التحكيم",
+          "text_en": "The Arbitration Council is competent to consider disputes arising from the determination of minimum wages, work accidents, dismissal from service, abandonment of work, imposition of fines, and generally all disputes between employers and employees concerning the application of the provisions of this law.",
+          "text_ar": "يختص المجلس التحكيمي: ١ بالنظر في الخلافات الناشئة عن تحديد الحد الادنى للاجور. ٢ بالنظر في الخلافات الناشئة عن طوارئ العمل المنصوص عليها في المرسوم الاشتراعي رقم ٢٥ الصادر في ٤ ايار سنة ١٩٤٣. ٣ بالنظر في الخلافات الناشئة عن الصرف من الخدمة وترك العمل، وفرض الغرامات وبصورة عامة في جميع الخلافات الناشئة بين أرباب العمل والاجراء عن تطبيق احكام هذا القانون",
+          "article": "79"
+        },
+        {
+          "subtitle_en": "Expedited Proceedings and Fee Exemption",
+          "subtitle_ar": "إجراءات مستعجلة وإعفاء من الرسوم",
+          "text_en": "The Arbitration Council shall hear cases brought before it through expedited procedures. These cases are exempt from court fees, but expenses shall be borne by the losing party.",
+          "text_ar": "ينظر المجلس التحكيمي في القضايا المرفوعة اليه بالطريقة المستعجلة. تعفى هذه القضايا من الرسوم القضائية دون النفقات فهذه تبقى على عاتق الفريق الخاسر",
+          "article": "80"
+        },
+        {
+          "subtitle_en": "Appeal Limitations for Arbitration Council Decisions (Amended)",
+          "subtitle_ar": "قيود الاستئناف على قرارات مجلس التحكيم (معدل)",
+          "text_en": "Decisions issued by the Labor Arbitration Councils are subject to review only through objection, third-party objection, and cassation, in accordance with the procedures stipulated in the Code of Civil Procedure and the Judicial Organization Law, while observing the special provisions contained in the following articles.",
+          "text_ar": "ان الاحكام الصادرة عن مجالس العمل التحكيمية لا تقبل من طرق المراجعة سوى الاعتراض واعتراض الغير والتمييز وفقا للاصول المنصوص عليها في قانون اصول المحاكمات المدنية وفي قانون التنظيم القضائي مع مراعاة الاحكام الخاصة الواردة في المواد التالية:",
+          "article": "81"
+        }
+      ]
+    }
+  ]
+}
+```
