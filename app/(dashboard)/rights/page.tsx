@@ -6,8 +6,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Scale, Clock, Calendar, Shield, Briefcase, Bot, User, Send, Loader2, Sparkles, Banknote, Users, ArrowLeft, ChevronRight, RefreshCw, Languages } from 'lucide-react'
 
+interface RightsCategory {
+  id: string
+  title: string
+  icon: React.ReactElement<{ className?: string }>
+  summary: string
+  details: {
+    subtitle: string
+    text: string
+  }[]
+}
+
 // --- Fallback Knowledge Base Data (English Only) ---
-const FALLBACK_RIGHTS = [
+const FALLBACK_RIGHTS: RightsCategory[] = [
   {
     id: 'hours',
     title: 'Working Hours & Conditions',
@@ -144,7 +155,7 @@ export default function LaborRightsPage() {
     }
   }
 
-  const getLocalizedRights = () => {
+  const getLocalizedRights = (): RightsCategory[] => {
     if (rightsData.length === 0) {
       return FALLBACK_RIGHTS
     }
@@ -152,7 +163,7 @@ export default function LaborRightsPage() {
     return rightsData.map(cat => ({
       id: cat.id,
       title: language === 'en' ? cat.title_en : cat.title_ar,
-      icon: iconMap[cat.id] || <Shield className="w-6 h-6 text-slate-700" />,
+      icon: (iconMap[cat.id] || <Shield className="w-6 h-6 text-slate-700" />) as React.ReactElement<{ className?: string }>,
       summary: language === 'en' ? cat.summary_en : cat.summary_ar,
       details: cat.details.map((det: any) => ({
         subtitle: language === 'en' ? det.subtitle_en : det.subtitle_ar,
