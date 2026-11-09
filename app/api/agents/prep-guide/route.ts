@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const { cvText, jobText, gaps, matching } = await req.json()
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) return NextResponse.json({ error: 'Missing Gemini API Key' }, { status: 500 })
 
     const genAI = new GoogleGenerativeAI(apiKey)

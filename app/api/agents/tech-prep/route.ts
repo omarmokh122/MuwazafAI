@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing target role or job description' }, { status: 400 })
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) return NextResponse.json({ error: 'Missing Gemini API Key' }, { status: 500 })
 
     const genAI = new GoogleGenerativeAI(apiKey)
