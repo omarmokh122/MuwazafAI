@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { PDFParse } from 'pdf-parse';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const PDF_URL = 'https://www.labor.gov.lb/Temp/Files/574b61dd-1233-4507-9da1-d4a3e3a6129a.pdf';
@@ -9,6 +8,10 @@ const DATA_DIR = path.join(process.cwd(), 'lib/data');
 const PDF_PATH = path.join(DATA_DIR, 'labor_law.pdf');
 const TEXT_PATH = path.join(DATA_DIR, 'labor_law_text.txt');
 const JSON_PATH = path.join(DATA_DIR, 'labor_rights_structured.json');
+
+// pdf-parse v2 touches browser globals (DOMMatrix) at import time and crashes on
+// Vercel's Node runtime, so only load it when a PDF actually has to be parsed.
+const loadPdfParse = () => import('pdf-parse');
 
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -25,6 +28,7 @@ export async function getLaborLawText(): Promise<string> {
   if (fs.existsSync(PDF_PATH)) {
     try {
       const buffer = fs.readFileSync(PDF_PATH);
+      const { PDFParse } = await loadPdfParse();
       const parser = new PDFParse({ data: buffer });
       const result = await parser.getText();
       fs.writeFileSync(TEXT_PATH, result.text);
@@ -101,6 +105,7 @@ export async function syncLaborLaw(force: boolean = false): Promise<{ synced: bo
     
     fs.writeFileSync(PDF_PATH, buffer);
     
+    const { PDFParse } = await loadPdfParse();
     const parser = new PDFParse({ data: buffer });
     const textResult = await parser.getText();
     const text = textResult.text;
