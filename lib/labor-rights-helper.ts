@@ -106,7 +106,7 @@ export async function syncLaborLaw(force: boolean = false): Promise<{ synced: bo
     const text = textResult.text;
     fs.writeFileSync(TEXT_PATH, text);
     
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return { synced: true, message: 'PDF downloaded and text parsed, but structured JSON could not be generated (missing Gemini API Key).' };
     }
