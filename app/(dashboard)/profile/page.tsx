@@ -5,8 +5,7 @@ import { useInterviewStore } from '@/lib/store/interview-store'
 import { useUserProfile } from '@/lib/store/user-profile'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { FileUp, FileText, Loader2, CheckCircle2, UserCircle, Shield, ChevronDown, Save } from 'lucide-react'
+import { FileUp, FileText, Loader2, CheckCircle2, Shield, ChevronDown, Save } from 'lucide-react'
 
 /* ─── Dropdown Select ────────────────────────── */
 function SelectField({
@@ -107,12 +106,15 @@ export default function ProfilePage() {
 
   // Load profile data from store on mount
   useEffect(() => {
-    setName(profile.fullName || '')
-    setEmail(profile.email || '')
-    setPosition(profile.currentPosition || '')
-    setRole(profile.targetRole || '')
-    setField(profile.field || '')
-    setCvText(profile.cvText || storeCvFile ? profile.cvText : '') // Initialize from store
+    const frame = requestAnimationFrame(() => {
+      setName(profile.fullName || '')
+      setEmail(profile.email || '')
+      setPosition(profile.currentPosition || '')
+      setRole(profile.targetRole || '')
+      setField(profile.field || '')
+      setCvText(profile.cvText || storeCvFile ? profile.cvText : '') // Initialize from store
+    })
+    return () => cancelAnimationFrame(frame)
   }, [profile.fullName, profile.email, profile.currentPosition, profile.targetRole, profile.field, profile.cvText, storeCvFile])
 
   const handleSave = () => {
@@ -164,8 +166,8 @@ export default function ProfilePage() {
       setInterviewData({ cvText: data.text, cvFileName: data.fileName })
       profile.setProfile({ cvText: data.text, cvFileName: data.fileName })
       setCvText(data.text)
-    } catch (err: any) {
-      setError(err.message || 'Failed to process file')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process file')
     } finally {
       setIsUploading(false)
     }
@@ -269,7 +271,7 @@ export default function ProfilePage() {
               <Shield className="w-8 h-8 text-slate-400 mb-4" />
               <h3 className="font-bold text-slate-800 mb-2">Privacy & Security</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Your uploaded resume is parsed securely. The text is stored entirely locally on your device using your browser's persistent storage.
+                Your uploaded resume is parsed securely. The text is stored entirely locally on your device using your browser&apos;s persistent storage.
               </p>
             </CardContent>
           </Card>

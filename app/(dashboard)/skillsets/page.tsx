@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Loader2, Code, Database, LineChart, Brush, Megaphone, ShieldCheck, Cpu, ArrowLeft, Zap, Sparkles, CheckCircle2, Users, Cloud, Laptop, Server, Smartphone, PenTool, Layout, Globe, Fingerprint, Coins, Gamepad, Stethoscope, Briefcase } from 'lucide-react'
@@ -30,10 +30,20 @@ const popularRoles = [
   { name: 'Business Operations', icon: <Briefcase className="w-5 h-5 text-slate-700" /> }
 ]
 
+type SkillsetEntry = { name: string; importance: string }
+
+type Skillset = {
+  role: string
+  description: string
+  hardSkills: SkillsetEntry[]
+  softSkills: SkillsetEntry[]
+  emergingTrends: SkillsetEntry[]
+}
+
 export default function SkillsetExplorerPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(false)
-  const [activeSkillset, setActiveSkillset] = useState<any>(null)
+  const [activeSkillset, setActiveSkillset] = useState<Skillset | null>(null)
   const [error, setError] = useState('')
 
   const fetchSkillset = async (roleName: string) => {
@@ -51,8 +61,8 @@ export default function SkillsetExplorerPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to fetch skillset')
       
       setActiveSkillset(data)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch skillset')
     } finally {
       setLoading(false)
     }
@@ -168,7 +178,7 @@ export default function SkillsetExplorerPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 grid gap-2.5">
-                  {activeSkillset.hardSkills.map((skill: any, idx: number) => (
+                  {activeSkillset.hardSkills.map((skill, idx) => (
                     <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-3 hover:border-blue-200 hover:shadow-sm transition-all group">
                       <div className="flex items-start gap-2 mb-1">
                         <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
@@ -188,7 +198,7 @@ export default function SkillsetExplorerPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 grid gap-2.5">
-                  {activeSkillset.softSkills.map((skill: any, idx: number) => (
+                  {activeSkillset.softSkills.map((skill, idx) => (
                     <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-3 hover:border-emerald-200 hover:shadow-sm transition-all group">
                       <div className="flex items-start gap-2 mb-1">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
@@ -208,7 +218,7 @@ export default function SkillsetExplorerPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 grid md:grid-cols-2 gap-3">
-                  {activeSkillset.emergingTrends.map((trend: any, idx: number) => (
+                  {activeSkillset.emergingTrends.map((trend, idx) => (
                     <div key={idx} className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                       <h4 className="font-bold text-purple-700 text-sm mb-1">{trend.name}</h4>
                       <p className="text-xs text-slate-600">{trend.importance}</p>

@@ -1,14 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+/* eslint-disable react/no-unescaped-entities -- static curriculum copy uses quotes for emphasis */
+
+import { useState } from 'react'
 import { useUserProfile } from '@/lib/store/user-profile'
 import { useInterviewStore } from '@/lib/store/interview-store'
 import { Loader2 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Label } from '@/components/ui/label'
-import { Users, Code, Briefcase, DollarSign, Brain, Target, ArrowLeft, CheckCircle2, PlayCircle, Star, Award, ChevronRight, AlertCircle } from 'lucide-react'
+import { Users, Code, Briefcase, Brain, Target, ArrowLeft, CheckCircle2, PlayCircle, Star, Award, ChevronRight, AlertCircle } from 'lucide-react'
+import { sanitizeAiHtmlClient } from '@/lib/markdown'
 
 // --- Academy Curriculum Data ---
 const baseModules = [
@@ -389,7 +391,24 @@ const baseModules = [
 ]
 
 
-const predefinedTechModules: Record<string, any> = {
+type InterviewQuiz = {
+  question: string
+  options: string[]
+  correctAnswer: number
+  explanation?: string
+}
+
+type InterviewModule = {
+  id: string
+  title: string
+  description: string
+  icon: React.ReactNode
+  color?: string
+  lessons: { title: string; content: React.ReactNode }[]
+  quiz: InterviewQuiz
+}
+
+const predefinedTechModules: Record<string, InterviewModule> = {
   'Software Engineer': {
     id: 'technical',
     title: 'Technical Interviews (SWE)',
@@ -500,7 +519,7 @@ export default function InterviewAcademy() {
   const { targetRole } = useUserProfile()
   const { jobText } = useInterviewStore()
 
-  const [activeModule, setActiveModule] = useState<any>(null)
+  const [activeModule, setActiveModule] = useState<InterviewModule>(baseModules[0])
   const [view, setView] = useState<'hub' | 'lesson' | 'quiz' | 'result'>('hub')
   const [currentLessonIdx, setCurrentLessonIdx] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
@@ -509,12 +528,12 @@ export default function InterviewAcademy() {
   const [selectedRole, setSelectedRole] = useState(
     predefinedTechModules[targetRole || ''] ? targetRole : 'Software Engineer'
   )
-  const [customTechModule, setCustomTechModule] = useState<any>(null)
+  const [customTechModule, setCustomTechModule] = useState<InterviewModule | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
 
   // Combine static modules with the dynamic technical module
   const currentTechModule = customTechModule || predefinedTechModules[selectedRole] || predefinedTechModules['Software Engineer']
-  const modules = [...baseModules]
+  const modules: InterviewModule[] = [...baseModules]
   
   // Insert the technical module at index 1 (between screening and behavioral)
   modules.splice(1, 0, currentTechModule)
@@ -536,14 +555,31 @@ export default function InterviewAcademy() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetRole: selectedRole, jobText })
       })
-      const data = await res.json()
+      const data = (await res.json()) as {
+        id: string
+        title: string
+        description: string
+        lessons?: { title: string; contentHtml?: string }[]
+        quiz: InterviewQuiz
+      }
       if (data.lessons) {
-        data.lessons = data.lessons.map((l: any) => ({
-          ...l,
-          content: <div dangerouslySetInnerHTML={{ __html: l.contentHtml }} className="prose prose-slate max-w-none text-sm" />
+        const lessons = data.lessons.map((lesson) => ({
+          title: lesson.title,
+          content: (
+            <div
+              dangerouslySetInnerHTML={{ __html: sanitizeAiHtmlClient(String(lesson.contentHtml || '')) }}
+              className="prose prose-slate max-w-none text-sm"
+            />
+          ),
         }))
-        data.icon = <Code className="w-6 h-6 text-slate-700" />
-        setCustomTechModule(data)
+        setCustomTechModule({
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          icon: <Code className="w-6 h-6 text-slate-700" />,
+          lessons,
+          quiz: data.quiz,
+        })
       }
     } catch(error) {
       console.error(error)
@@ -552,7 +588,7 @@ export default function InterviewAcademy() {
     }
   }
 
-  const startModule = (mod: any) => {
+  const startModule = (mod: InterviewModule) => {
     setActiveModule(mod)
     setCurrentLessonIdx(0)
     setView('lesson')
@@ -577,7 +613,7 @@ export default function InterviewAcademy() {
   }
 
   const closeModule = () => {
-    setActiveModule(null)
+    setActiveModule(baseModules[0])
     setView('hub')
   }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -11,49 +11,49 @@ import { Logo } from '@/components/ui/logo'
 function DotGrid() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mouse = useRef({ x: -1000, y: -1000 })
-  const animRef = useRef<number>(0)
 
-  const draw = useCallback(() => {
+  useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const dpr = window.devicePixelRatio || 1
-    canvas.width = canvas.offsetWidth * dpr
-    canvas.height = canvas.offsetHeight * dpr
-    ctx.scale(dpr, dpr)
-    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight)
+    let frame = 0
+    const draw = () => {
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = canvas.offsetWidth * dpr
+      canvas.height = canvas.offsetHeight * dpr
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight)
 
-    const gap = 28
-    const baseRadius = 1.5
-    const maxRadius = 4
-    const influence = 140
+      const gap = 28
+      const baseRadius = 1.5
+      const maxRadius = 4
+      const influence = 140
 
-    for (let x = gap; x < canvas.offsetWidth; x += gap) {
-      for (let y = gap; y < canvas.offsetHeight; y += gap) {
-        const dx = x - mouse.current.x
-        const dy = y - mouse.current.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
+      for (let x = gap; x < canvas.offsetWidth; x += gap) {
+        for (let y = gap; y < canvas.offsetHeight; y += gap) {
+          const dx = x - mouse.current.x
+          const dy = y - mouse.current.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
 
-        const t = Math.max(0, 1 - dist / influence)
-        const radius = baseRadius + (maxRadius - baseRadius) * t
-        const alpha = 0.12 + 0.4 * t
+          const t = Math.max(0, 1 - dist / influence)
+          const radius = baseRadius + (maxRadius - baseRadius) * t
+          const alpha = 0.12 + 0.4 * t
 
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`
-        ctx.fill()
+          ctx.beginPath()
+          ctx.arc(x, y, radius, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`
+          ctx.fill()
+        }
       }
+
+      frame = requestAnimationFrame(draw)
     }
 
-    animRef.current = requestAnimationFrame(draw)
+    frame = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(frame)
   }, [])
-
-  useEffect(() => {
-    animRef.current = requestAnimationFrame(draw)
-    return () => cancelAnimationFrame(animRef.current)
-  }, [draw])
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect()
@@ -78,11 +78,32 @@ function DotGrid() {
 
 export default function LandingPage() {
   const [isDemoLoading, setIsDemoLoading] = useState(false)
+  const [demoError, setDemoError] = useState('')
 
-  const handleDemoLogin = () => {
+  const handleDemoLogin = async () => {
     setIsDemoLoading(true)
-    document.cookie = "demo_mode=true; path=/; max-age=86400"
-    window.location.href = "/dashboard"
+    setDemoError('')
+    try {
+      const response = await fetch('/api/auth/demo', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      })
+      if (!response.ok) {
+        setDemoError(
+          response.status === 429
+            ? 'Too many demo sessions from this network. Please try again later.'
+            : 'The demo is unavailable right now. Please try again.'
+        )
+        return
+      }
+      window.location.assign('/dashboard')
+    } catch {
+      setDemoError('Could not start the demo. Please try again.')
+    } finally {
+      setIsDemoLoading(false)
+    }
   }
 
   const containerVariants = {
@@ -171,6 +192,16 @@ export default function LandingPage() {
                 <ArrowRight className="ml-2 h-4 w-4 opacity-60 group-hover:translate-x-1 transition-transform" />
               </Link>
             </motion.div>
+
+            {demoError ? (
+              <motion.p
+                variants={itemVariants}
+                role="alert"
+                className="mt-6 text-[13px] font-medium text-red-600"
+              >
+                {demoError}
+              </motion.p>
+            ) : null}
           </motion.div>
         </section>
 
@@ -311,7 +342,7 @@ export default function LandingPage() {
                   Manage your search like a pro.
                 </h2>
                 <p className="text-[18px] text-el-dark-gray mb-8 leading-[1.6]">
-                  Stop using messy spreadsheets. Our built-in job tracker organizes your applications into a clean Kanban board. Drag and drop from "Applied" to "Interviewing" to "Offer", and let our AI remind you when it's time to follow up.
+                  Stop using messy spreadsheets. Our built-in job tracker organizes your applications into a clean Kanban board. Drag and drop from &ldquo;Applied&rdquo; to &ldquo;Interviewing&rdquo; to &ldquo;Offer&rdquo;, and let our AI remind you when it&rsquo;s time to follow up.
                 </p>
                 <ul className="space-y-3 mb-10 text-[15px] text-el-dark-gray">
                   <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-el-black" /> Visual Kanban pipeline</li>

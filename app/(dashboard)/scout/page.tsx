@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -9,27 +9,27 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FileSearch, Loader2, CheckCircle2, AlertCircle, Target, UploadCloud, ArrowRight } from 'lucide-react'
-import { extractSkills } from '@/lib/parsers/skills'
 import { useRouter } from 'next/navigation'
 import { useInterviewStore } from '@/lib/store/interview-store'
 import { useUserProfile } from '@/lib/store/user-profile'
 
+type MatchResult = {
+  score: number
+  matching: string[]
+  gaps: string[]
+  analysis: string
+}
+
 export default function CVMatcherPage() {
   const router = useRouter()
-  const [cvText, setCvText] = useState('')
+  const { cvText: profileCvText } = useUserProfile()
+  const [cvOverride, setCvOverride] = useState<string | null>(null)
+  const cvText = cvOverride ?? profileCvText ?? ''
   const [jobText, setJobText] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<MatchResult | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const jobFileInputRef = useRef<HTMLInputElement>(null)
-  
-  const { cvText: profileCvText } = useUserProfile()
-
-  useEffect(() => {
-    if (profileCvText && !cvText) {
-      setCvText(profileCvText)
-    }
-  }, [profileCvText])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -38,7 +38,7 @@ export default function CVMatcherPage() {
     const reader = new FileReader()
     reader.onload = (event) => {
       // Very basic text extraction for demo purposes
-      setCvText(event.target?.result as string || '')
+      setCvOverride(event.target?.result as string || '')
     }
     reader.readAsText(file) // For a real app, use a PDF parser API
   }
@@ -130,7 +130,7 @@ export default function CVMatcherPage() {
                   placeholder="Paste your CV content here..." 
                   className="flex-1 min-h-0 h-32 border-slate-200 focus-visible:ring-slate-400 bg-slate-50/50 text-sm"
                   value={cvText}
-                  onChange={(e) => setCvText(e.target.value)}
+                  onChange={(e) => setCvOverride(e.target.value)}
                 />
               </div>
               <div className="space-y-3">

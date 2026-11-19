@@ -8,7 +8,6 @@ import {
   FolderOpen, 
   Search, 
   FileText, 
-  Download, 
   ExternalLink, 
   BookOpen, 
   TrendingUp, 

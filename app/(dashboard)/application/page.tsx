@@ -79,8 +79,8 @@ export default function CoverLetterPage() {
       if (!res.ok) throw new Error(data.error)
       
       setCoverLetter(data.coverLetter)
-    } catch (err: any) {
-      setError(err.message || "Failed to generate cover letter.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate cover letter.')
     } finally {
       setIsGenerating(false)
     }
@@ -113,8 +113,8 @@ export default function CoverLetterPage() {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-    } catch (err: any) {
-      setError(err.message || "Export failed.")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Export failed.')
     } finally {
       setIsExporting(false)
     }

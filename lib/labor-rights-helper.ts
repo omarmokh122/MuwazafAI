@@ -3,11 +3,24 @@ import path from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const PDF_URL = 'https://www.labor.gov.lb/Temp/Files/574b61dd-1233-4507-9da1-d4a3e3a6129a.pdf';
+const MAX_PDF_BYTES = 12 * 1024 * 1024;
+const MAX_JSON_BYTES = 2 * 1024 * 1024;
+const MAX_TEXT_CHARS = 400_000;
 
 const DATA_DIR = path.join(process.cwd(), 'lib/data');
 const PDF_PATH = path.join(DATA_DIR, 'labor_law.pdf');
 const TEXT_PATH = path.join(DATA_DIR, 'labor_law_text.txt');
 const JSON_PATH = path.join(DATA_DIR, 'labor_rights_structured.json');
+
+function readBounded(filePath: string, maxBytes: number): string | null {
+  try {
+    const stats = fs.statSync(filePath);
+    if (!stats.isFile() || stats.size > maxBytes) return null;
+    return fs.readFileSync(filePath, 'utf-8');
+  } catch {
+    return null;
+  }
+}
 
 // pdf-parse v2 touches browser globals (DOMMatrix) at import time and crashes on
 // Vercel's Node runtime, so only load it when a PDF actually has to be parsed.
@@ -21,28 +34,27 @@ function ensureDataDir() {
 
 export async function getLaborLawText(): Promise<string> {
   ensureDataDir();
-  if (fs.existsSync(TEXT_PATH)) {
-    return fs.readFileSync(TEXT_PATH, 'utf-8');
-  }
-  
+
+  const cachedText = readBounded(TEXT_PATH, MAX_TEXT_CHARS * 2);
+  if (cachedText) return cachedText.slice(0, MAX_TEXT_CHARS);
+
   if (fs.existsSync(PDF_PATH)) {
     try {
       const buffer = fs.readFileSync(PDF_PATH);
       const { PDFParse } = await loadPdfParse();
       const parser = new PDFParse({ data: buffer });
       const result = await parser.getText();
-      fs.writeFileSync(TEXT_PATH, result.text);
-      return result.text;
+      const text = (result.text || '').slice(0, MAX_TEXT_CHARS);
+      fs.writeFileSync(TEXT_PATH, text);
+      return text;
     } catch (e) {
       console.error('Failed to parse cached PDF, falling back to dynamic sync', e);
     }
   }
 
   await syncLaborLaw();
-  if (fs.existsSync(TEXT_PATH)) {
-    return fs.readFileSync(TEXT_PATH, 'utf-8');
-  }
-  return '';
+  const syncedText = readBounded(TEXT_PATH, MAX_TEXT_CHARS * 2);
+  return syncedText ? syncedText.slice(0, MAX_TEXT_CHARS) : '';
 }
 
 function cleanJsonString(str: string): string {
@@ -50,13 +62,13 @@ function cleanJsonString(str: string): string {
   return jsonMatch ? jsonMatch[0] : str.trim();
 }
 
-export async function getLaborRightsCategories(): Promise<any> {
+export async function getLaborRightsCategories(): Promise<unknown> {
   ensureDataDir();
-  if (fs.existsSync(JSON_PATH)) {
+
+  const cached = readBounded(JSON_PATH, MAX_JSON_BYTES);
+  if (cached) {
     try {
-      const data = fs.readFileSync(JSON_PATH, 'utf-8');
-      const cleaned = cleanJsonString(data);
-      return JSON.parse(cleaned);
+      return JSON.parse(cleanJsonString(cached));
     } catch (e) {
       console.error('Error parsing structured labor rights JSON from cache. Triggering forced sync...', e);
       try {
@@ -69,14 +81,12 @@ export async function getLaborRightsCategories(): Promise<any> {
     }
   }
 
-  // Force sync because the JSON was missing or corrupted
   await syncLaborLaw(true);
-  
-  if (fs.existsSync(JSON_PATH)) {
+
+  const synced = readBounded(JSON_PATH, MAX_JSON_BYTES);
+  if (synced) {
     try {
-      const data = fs.readFileSync(JSON_PATH, 'utf-8');
-      const cleaned = cleanJsonString(data);
-      return JSON.parse(cleaned);
+      return JSON.parse(cleanJsonString(synced));
     } catch (e) {
       console.error('Error parsing newly synced structured labor rights JSON:', e);
     }
@@ -89,13 +99,28 @@ export async function syncLaborLaw(force: boolean = false): Promise<{ synced: bo
   console.log('Syncing Lebanese Labor Law from:', PDF_URL);
   
   try {
-    const res = await fetch(PDF_URL);
+    const res = await fetch(PDF_URL, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20_000),
+      headers: { Accept: 'application/pdf' },
+    });
     if (!res.ok) {
       return { synced: false, message: `Failed to download PDF from government site. Status: ${res.status}` };
     }
-    
+
+    const declaredLength = Number(res.headers.get('content-length') || 0);
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_PDF_BYTES) {
+      return { synced: false, message: 'Downloaded PDF exceeds the size limit.' };
+    }
+
     const buffer = Buffer.from(await res.arrayBuffer());
-    
+    if (buffer.length > MAX_PDF_BYTES) {
+      return { synced: false, message: 'Downloaded PDF exceeds the size limit.' };
+    }
+    if (buffer.subarray(0, 5).toString('latin1') !== '%PDF-') {
+      return { synced: false, message: 'Downloaded file is not a valid PDF.' };
+    }
+
     if (!force && fs.existsSync(PDF_PATH)) {
       const oldStats = fs.statSync(PDF_PATH);
       if (oldStats.size === buffer.length) {
@@ -108,7 +133,7 @@ export async function syncLaborLaw(force: boolean = false): Promise<{ synced: bo
     const { PDFParse } = await loadPdfParse();
     const parser = new PDFParse({ data: buffer });
     const textResult = await parser.getText();
-    const text = textResult.text;
+    const text = (textResult.text || '').slice(0, MAX_TEXT_CHARS);
     fs.writeFileSync(TEXT_PATH, text);
     
     const apiKey = process.env.GEMINI_API_KEY;
@@ -167,12 +192,16 @@ Only return the JSON object, do not wrap in markdown or anything else.`;
     const responseText = geminiResult.response.text();
     const cleanedText = cleanJsonString(responseText);
     JSON.parse(cleanedText); // Validates JSON format
-    
+
+    if (Buffer.byteLength(cleanedText, 'utf8') > MAX_JSON_BYTES) {
+      return { synced: false, message: 'Generated structured data exceeded the size limit.' };
+    }
+
     fs.writeFileSync(JSON_PATH, cleanedText);
     
     return { synced: true, message: 'Successfully downloaded PDF, parsed text, and regenerated structured JSON via Gemini.' };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error syncing Labor Law PDF:', error);
-    return { synced: false, message: `Sync failed: ${error.message}` };
+    return { synced: false, message: `Sync failed: ${error instanceof Error ? error.message : 'unknown error'}` };
   }
 }

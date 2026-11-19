@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Scale, Clock, Calendar, Shield, Briefcase, Bot, User, Send, Loader2, Sparkles, Banknote, Users, ArrowLeft, ChevronRight, RefreshCw, Languages } from 'lucide-react'
+import { renderSafeMarkdown } from '@/lib/markdown'
 
 interface RightsCategory {
   id: string
@@ -15,6 +16,23 @@ interface RightsCategory {
     subtitle: string
     text: string
   }[]
+}
+
+type RightsApiDetail = {
+  subtitle_en: string
+  subtitle_ar: string
+  text_en: string
+  text_ar: string
+  article?: string | null
+}
+
+type RightsApiCategory = {
+  id: string
+  title_en: string
+  title_ar: string
+  summary_en: string
+  summary_ar: string
+  details: RightsApiDetail[]
 }
 
 // --- Fallback Knowledge Base Data (English Only) ---
@@ -101,7 +119,7 @@ const iconMap: Record<string, React.ReactNode> = {
 }
 
 export default function LaborRightsPage() {
-  const [rightsData, setRightsData] = useState<any[]>([])
+  const [rightsData, setRightsData] = useState<RightsApiCategory[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [language, setLanguage] = useState<'en' | 'ar'>('en')
   const [syncing, setSyncing] = useState(false)
@@ -165,7 +183,7 @@ export default function LaborRightsPage() {
       title: language === 'en' ? cat.title_en : cat.title_ar,
       icon: (iconMap[cat.id] || <Shield className="w-6 h-6 text-slate-700" />) as React.ReactElement<{ className?: string }>,
       summary: language === 'en' ? cat.summary_en : cat.summary_ar,
-      details: cat.details.map((det: any) => ({
+      details: cat.details.map((det) => ({
         subtitle: language === 'en' ? det.subtitle_en : det.subtitle_ar,
         text: (language === 'en' ? det.text_en : det.text_ar) + (det.article ? ` (${language === 'en' ? 'Article' : 'المادة'} ${det.article})` : '')
       }))
@@ -208,7 +226,7 @@ export default function LaborRightsPage() {
         role: 'assistant',
         content: data.response
       }])
-    } catch (error) {
+    } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: "I'm having trouble accessing my legal database right now. Please try again later."
@@ -289,7 +307,7 @@ export default function LaborRightsPage() {
               </div>
               
               <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {activeTopic.details.map((detail: any, idx: number) => (
+                {activeTopic.details.map((detail, idx) => (
                   <div key={idx} className="relative">
                     <h3 className="font-semibold text-slate-800 text-sm mb-2 flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
@@ -377,7 +395,10 @@ export default function LaborRightsPage() {
                         : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'
                     }`}>
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm prose-slate max-w-none whitespace-pre-wrap animate-fade-in" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                        <div
+                          className="prose prose-sm prose-slate max-w-none animate-fade-in"
+                          dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(msg.content) }}
+                        />
                       ) : (
                         msg.content
                       )}

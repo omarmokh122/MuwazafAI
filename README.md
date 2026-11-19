@@ -39,12 +39,18 @@ npm install
 ```
 
 ### 3. Set up Environment Variables
-Create a `.env.local` file in the root directory and add the following keys:
+Copy `.env.example` to `.env.local` and fill in the values:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-GOOGLE_GEMINI_API_KEY=your_gemini_api_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key   # server-only
+GEMINI_API_KEY=your_gemini_api_key
+AUTH_SECRET=a_long_random_string                  # openssl rand -base64 48
+ADMIN_SECRET=a_long_random_string                 # protects labor-law sync
 ```
+Real accounts and the interactive demo both work once Supabase is configured. Without Supabase, the app stays in demo-only mode.
+
+Security architecture, limits, and reporting guidance live in [SECURITY.md](./SECURITY.md).
 
 ### 4. Run the development server
 ```bash

@@ -1,28 +1,58 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getLaborRightsCategories, syncLaborLaw } from '@/lib/labor-rights-helper';
+import { timingSafeEqual } from 'node:crypto'
+import type { NextRequest } from 'next/server'
+import { withGetGuard } from '@/lib/security/api-guard'
+import { apiError, json } from '@/lib/security/http'
+import { getLaborRightsCategories, syncLaborLaw } from '@/lib/labor-rights-helper'
 
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const triggerSync = searchParams.get('sync') === 'true';
-    const forceSync = searchParams.get('force') === 'true';
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
-    if (triggerSync || forceSync) {
-      const syncResult = await syncLaborLaw(forceSync);
-      return NextResponse.json({
-        success: true,
-        message: syncResult.message,
-        synced: syncResult.synced
-      });
+function matchesAdminSecret(provided: string | null): boolean {
+  const expected = process.env.ADMIN_SECRET
+  if (!expected || !provided) return false
+
+  const providedBuffer = Buffer.from(provided)
+  const expectedBuffer = Buffer.from(expected)
+  if (providedBuffer.length !== expectedBuffer.length) return false
+
+  return timingSafeEqual(providedBuffer, expectedBuffer)
+}
+
+export const GET = withGetGuard(
+  {
+    scope: 'labor-rights',
+    limit: 30,
+    windowMs: 60_000,
+  },
+  async (request: NextRequest) => {
+    const { searchParams } = request.nextUrl
+    const wantsSync = searchParams.get('sync') === 'true' || searchParams.get('force') === 'true'
+
+    if (wantsSync) {
+      if (!matchesAdminSecret(request.headers.get('x-admin-secret'))) {
+        return apiError('Syncing labor-law data is restricted to administrators.', 403)
+      }
+
+      try {
+        const force = searchParams.get('force') === 'true'
+        const result = await syncLaborLaw(force)
+        return json({
+          success: result.synced,
+          message: result.message,
+          synced: result.synced,
+        })
+      } catch (error) {
+        console.error('[labor-rights] sync failed', error)
+        return apiError('Failed to sync labor-law data.', 500)
+      }
     }
 
-    const categoriesData = await getLaborRightsCategories();
-    return NextResponse.json(categoriesData);
-  } catch (error: any) {
-    console.error('Error in /api/labor-rights:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve or sync labor rights data.', details: error.message },
-      { status: 500 }
-    );
+    try {
+      const categories = await getLaborRightsCategories()
+      return json(categories)
+    } catch (error) {
+      console.error('[labor-rights] read failed', error)
+      return apiError('Failed to load labor-rights data.', 500)
+    }
   }
-}
+)

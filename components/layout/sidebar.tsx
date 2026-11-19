@@ -2,13 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Brain, LayoutDashboard, FileSearch, Target, PlayCircle, Briefcase, Scale, FolderOpen, LogOut, ListTodo, LineChart, X } from 'lucide-react'
+import { LayoutDashboard, FileSearch, Target, PlayCircle, Briefcase, Scale, FolderOpen, LogOut, ListTodo, LineChart, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { Logo } from '@/components/ui/logo'
-import { useUserProfile } from '@/lib/store/user-profile'
+import { signOutEverywhere } from '@/lib/client/auth'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -24,18 +22,9 @@ const navItems = [
 
 export function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean, setIsOpen?: (v: boolean) => void }) {
   const pathname = usePathname()
-  const router = useRouter()
-  const supabase = createClient()
-  const { clearProfile } = useUserProfile()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    document.cookie = 'demo_mode=; path=/; max-age=0'
-    clearProfile()
-    // Clear interview store too
-    localStorage.removeItem('muwaazaf-interview-storage')
-    localStorage.removeItem('muwaazaf-user-profile')
-    window.location.href = '/'
+    await signOutEverywhere()
   }
 
   return (
@@ -66,7 +55,7 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen?: boolean, setIsOpen?: (
           )}
         </div>
 
-      <nav className="flex-1 space-y-1 px-4 py-6 overflow-y-auto scrollbar-thin">
+      <nav aria-label="Primary" className="flex-1 space-y-1 px-4 py-6 overflow-y-auto scrollbar-thin">
         {navItems.map((item) => {
           const isActive = pathname === item.href
           return (

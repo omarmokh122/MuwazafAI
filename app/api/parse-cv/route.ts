@@ -1,92 +1,83 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { withFormGuard } from '@/lib/security/api-guard'
+import { apiError, json } from '@/lib/security/http'
+import { MAX_UPLOAD_BYTES } from '@/lib/security/constants'
+import { validateUpload } from '@/lib/security/upload'
 
-export async function POST(req: NextRequest) {
-  try {
-    const formData = await req.formData()
-    const file = formData.get('file') as File
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+function cleanExtractedText(value: string): string {
+  return value
+    .replace(/\u0000/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60000)
+}
+
+export const POST = withFormGuard(
+  {
+    scope: 'parse-cv',
+    limit: 6,
+    windowMs: 60_000,
+    maxBytes: MAX_UPLOAD_BYTES + 512 * 1024,
+  },
+  async (_request, formData) => {
+    const file = formData.get('file')
+    if (!(file instanceof File)) {
+      return apiError('No file was provided.', 400)
     }
 
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 400 })
+    const upload = await validateUpload(file)
+    if ('error' in upload) {
+      return apiError(upload.error, upload.status)
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
     let parsedText = ''
 
-    const ext = file.name?.substring(file.name.lastIndexOf('.')).toLowerCase() || ''
-
-    if (file.type === 'application/pdf' || ext === '.pdf') {
-      let needsGeminiFallback = false
-
+    if (upload.extension === 'pdf') {
       try {
-        const pdfParse = require('pdf-parse')
-        const data = await pdfParse(buffer)
-        parsedText = data.text || ''
-        
-        // If it's an image-based PDF, pdf-parse will return empty or very little text
-        if (!parsedText || parsedText.trim().length < 50) {
-          return NextResponse.json(
-            { error: 'This PDF appears to be a scanned image or flattened file without selectable text. Please upload a standard text-based PDF or a Word document.' },
-            { status: 422 }
-          )
-        }
-      } catch (pdfError: any) {
-        console.error('PDF parse error:', pdfError)
-        return NextResponse.json(
-          { error: 'Could not read this PDF. It may be corrupted or encrypted. Please try a different file or format.' },
-          { status: 422 }
+        const { PDFParse } = await import('pdf-parse')
+        const parser = new PDFParse({ data: upload.buffer })
+        const result = await parser.getText()
+        parsedText = result.text || ''
+      } catch (error) {
+        console.error('[parse-cv] PDF parse failed', error)
+        return apiError(
+          'Could not read this PDF. It may be corrupted. Please try a different file.',
+          422
         )
       }
 
-    } else if (
-      file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      ext === '.docx'
-    ) {
-      try {
-        const mammoth = require('mammoth')
-        const data = await mammoth.extractRawText({ buffer })
-        parsedText = data.value || ''
-      } catch (docxError: any) {
-        console.error('DOCX parse error:', docxError)
-        return NextResponse.json(
-          { error: 'Could not read this Word document. Please ensure it is a valid .docx file.' },
-          { status: 422 }
+      if (parsedText.trim().length < 50) {
+        return apiError(
+          'This PDF appears to be a scanned image without selectable text. Please upload a text-based PDF or a DOCX file.',
+          422
         )
       }
-    } else if (file.type === 'application/msword' || ext === '.doc') {
-      // .doc format (legacy Word) - mammoth doesn't support it well
-      return NextResponse.json(
-        { error: 'Legacy .doc format is not fully supported. Please save your file as .docx or .pdf and try again.' },
-        { status: 422 }
-      )
     } else {
-      return NextResponse.json(
-        { error: 'Unsupported file type. Please upload a PDF or DOCX file.' },
-        { status: 400 }
+      try {
+        const mammothModule = await import('mammoth')
+        const mammoth = mammothModule.default ?? mammothModule
+        const result = await mammoth.extractRawText({ buffer: upload.buffer })
+        parsedText = result.value || ''
+      } catch (error) {
+        console.error('[parse-cv] DOCX parse failed', error)
+        return apiError(
+          'Could not read this Word document. Please ensure it is a valid .docx file.',
+          422
+        )
+      }
+    }
+
+    const cleanText = cleanExtractedText(parsedText)
+
+    if (cleanText.length < 10) {
+      return apiError(
+        'Could not extract meaningful text from this file. Please try a different file.',
+        422
       )
     }
 
-    if (!parsedText || parsedText.trim().length < 10) {
-      return NextResponse.json(
-        { error: 'Could not extract meaningful text from this file. Please try a different file.' },
-        { status: 422 }
-      )
-    }
-
-    // Clean up excessive whitespace/newlines to save tokens
-    const cleanText = parsedText.replace(/\s+/g, ' ').trim()
-
-    return NextResponse.json({ text: cleanText, fileName: file.name })
-  } catch (error: any) {
-    console.error('File parsing error:', error)
-    return NextResponse.json(
-      { error: error?.message || 'Failed to process file. Please try again.' },
-      { status: 500 }
-    )
+    return json({ text: cleanText, fileName: upload.fileName })
   }
-}
+)

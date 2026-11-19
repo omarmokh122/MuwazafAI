@@ -1,53 +1,56 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { aiRequestOptions, getGenAI } from '@/lib/ai/gemini'
+import { aiErrorResponse } from '@/lib/ai/errors'
+import { withJsonGuard } from '@/lib/security/api-guard'
+import { PROMPT_INJECTION_DEFENSE, parseJsonFromModel, untrusted } from '@/lib/security/prompt'
+import { prepGuideRequestSchema, prepGuideResponseSchema } from '@/lib/security/schemas'
+import { json } from '@/lib/security/http'
 
-export async function POST(req: NextRequest) {
-  try {
-    const { cvText, jobText, gaps, matching } = await req.json()
+export const runtime = 'nodejs'
 
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) return NextResponse.json({ error: 'Missing Gemini API Key' }, { status: 500 })
-
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
-      generationConfig: { responseMimeType: "application/json" }
-    })
-
-    const prompt = `You are a world-class Executive Interview Coach. 
-Analyze the candidate's CV and the Job Description, focusing heavily on the identified missing skills (Gaps: ${gaps.join(', ')}) and the matching skills (Matching: ${matching.join(', ')}).
-
-Generate a personalized "Skill Demonstration Playbook" for the candidate in purely valid JSON format.
-Follow this strict JSON schema:
+export const POST = withJsonGuard(
+  {
+    scope: 'agents:prep-guide',
+    schema: prepGuideRequestSchema,
+    limit: 8,
+    windowMs: 60_000,
+  },
+  async (_request, data) => {
+    try {
+      const genAI = getGenAI()
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        systemInstruction: `You are a world-class executive interview coach.
+Analyze the untrusted CV and job description, focusing on the identified gaps and matching skills.
+Return JSON only:
 {
-  "interviewFlow": ["<string> Expected phase 1", "<string> Expected phase 2", "..."],
-  "matchingPitch": "<string> A 2-sentence elevator pitch on how to professionally highlight the matching skills they DO have.",
-  "gapBridges": [
-    {
-      "gapSkill": "<string> The missing skill",
-      "bridgeStrategy": "<string> How they should pivot or frame their lack of experience positively using existing parallel skills from their CV."
-    }
-  ],
-  "keywordsToDrop": ["<string> Important keyword from JD 1", "<string> keyword 2", "..."]
+  "interviewFlow": ["<phase>"],
+  "matchingPitch": "<2-sentence pitch>",
+  "gapBridges": [{ "gapSkill": "<gap>", "bridgeStrategy": "<how to pivot>" }],
+  "keywordsToDrop": ["<keyword>"]
 }
 
-CV CONTENT:
----
-${cvText}
----
+${PROMPT_INJECTION_DEFENSE}`,
+        generationConfig: { responseMimeType: 'application/json' },
+      })
+
+      const prompt = `GAPS:
+${untrusted('candidate_skill_gaps', data.gaps.join(', ') || 'None provided')}
+
+MATCHING SKILLS:
+${untrusted('candidate_matching_skills', data.matching.join(', ') || 'None provided')}
+
+CANDIDATE CV:
+${untrusted('candidate_cv', data.cvText)}
 
 JOB DESCRIPTION:
----
-${jobText}
----`
+${untrusted('job_description', data.jobText)}`
 
-    const result = await model.generateContent(prompt)
-    const responseText = result.response.text()
-    const parsedData = JSON.parse(responseText)
+      const result = await model.generateContent(prompt, aiRequestOptions())
+      const parsed = prepGuideResponseSchema.parse(parseJsonFromModel(result.response.text()))
 
-    return NextResponse.json(parsedData)
-  } catch (error) {
-    console.error('Prep Guide API Error:', error)
-    return NextResponse.json({ error: 'Failed to generate prep guide' }, { status: 500 })
+      return json(parsed)
+    } catch (error) {
+      return aiErrorResponse('prep-guide', error)
+    }
   }
-}
+)

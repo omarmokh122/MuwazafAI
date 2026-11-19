@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local one-off scripts, not part of the application bundle:
+    "test-*.mjs",
+    "test-*.js",
+    "patch_prep.cjs",
   ]),
 ]);
 

@@ -1,165 +1,17 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Upload, FileText, CheckCircle2, ChevronDown, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ArrowRight, CheckCircle2, Loader2, MailCheck, PlayCircle } from 'lucide-react'
+import { AuthShell } from '@/components/auth/auth-shell'
+import { PasswordField } from '@/components/auth/password-field'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createClient, isAuthConfigured } from '@/lib/supabase/client'
+import { signupSchema, zodFieldErrors, type FieldErrors } from '@/lib/auth/validation'
 import { useUserProfile } from '@/lib/store/user-profile'
-import { useInterviewStore } from '@/lib/store/interview-store'
-
-/* ─── Dot Grid Canvas (follows mouse) ────────────────────────── */
-function DotGrid() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const mouse = useRef({ x: -1000, y: -1000 })
-  const animRef = useRef<number>(0)
-
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const dpr = window.devicePixelRatio || 1
-    canvas.width = canvas.offsetWidth * dpr
-    canvas.height = canvas.offsetHeight * dpr
-    ctx.scale(dpr, dpr)
-    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight)
-
-    const gap = 28
-    const baseRadius = 1.5
-    const maxRadius = 4
-    const influence = 140
-
-    for (let x = gap; x < canvas.offsetWidth; x += gap) {
-      for (let y = gap; y < canvas.offsetHeight; y += gap) {
-        const dx = x - mouse.current.x
-        const dy = y - mouse.current.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-
-        const t = Math.max(0, 1 - dist / influence)
-        const radius = baseRadius + (maxRadius - baseRadius) * t
-        const alpha = 0.12 + 0.4 * t
-
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`
-        ctx.fill()
-      }
-    }
-
-    animRef.current = requestAnimationFrame(draw)
-  }, [])
-
-  useEffect(() => {
-    animRef.current = requestAnimationFrame(draw)
-    return () => cancelAnimationFrame(animRef.current)
-  }, [draw])
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const rect = canvasRef.current?.getBoundingClientRect()
-    if (rect) {
-      mouse.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
-    }
-  }
-
-  const handleMouseLeave = () => {
-    mouse.current = { x: -1000, y: -1000 }
-  }
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    />
-  )
-}
-
-/* ─── Custom Select Component ────────────────────────── */
-function SelectDropdown({
-  id,
-  label,
-  placeholder,
-  options,
-  value,
-  onChange,
-}: {
-  id: string
-  label: string
-  placeholder: string
-  options: string[]
-  value: string
-  onChange: (v: string) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  return (
-    <div className="space-y-2" ref={ref}>
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <button
-          id={id}
-          type="button"
-          onClick={() => setOpen(!open)}
-          className={`flex h-12 w-full items-center justify-between rounded-xl border bg-white px-4 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-slate-900 ${
-            value ? 'text-slate-900 border-slate-300' : 'text-slate-400 border-slate-200'
-          }`}
-        >
-          <span className="truncate">{value || placeholder}</span>
-          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
-        {open && (
-          <div className="absolute z-50 mt-1 w-full max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl animate-in fade-in slide-in-from-top-1 duration-150">
-            {options.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50 first:rounded-t-xl last:rounded-b-xl ${
-                  value === opt ? 'bg-slate-50 font-medium text-slate-900' : 'text-slate-600'
-                }`}
-                onClick={() => {
-                  onChange(opt)
-                  setOpen(false)
-                }}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/* ─── Options Data ────────────────────────── */
-const CURRENT_POSITIONS = [
-  'Unemployed',
-  'Student',
-  'Fresh Graduate',
-  'Intern',
-  'Junior Employee',
-  'Mid-Level Professional',
-  'Senior Professional',
-  'Team Lead',
-  'Manager',
-  'Director',
-  'VP / Executive',
-  'Freelancer / Consultant',
-  'Business Owner',
-]
 
 const TARGET_ROLES = [
   'Software Engineer',
@@ -216,285 +68,378 @@ const FIELDS = [
   'Other',
 ]
 
-/* ─── Main Page ────────────────────────── */
+const selectClassName =
+  'h-12 w-full rounded-xl border border-el-border-light bg-white px-3 text-[15px] text-el-black shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-el-black/20'
+
 export default function SignupPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [nameValue, setNameValue] = useState('')
-  const [emailValue, setEmailValue] = useState('')
-  const [currentPosition, setCurrentPosition] = useState('')
+  const router = useRouter()
+  const authConfigured = isAuthConfigured()
+  const { setProfile } = useUserProfile()
+
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [targetRole, setTargetRole] = useState('')
   const [field, setField] = useState('')
-  const [cvFile, setCvFile] = useState<File | null>(null)
-  const [cvUploading, setCvUploading] = useState(false)
-  const [cvSuccess, setCvSuccess] = useState(false)
-  const [cvError, setCvError] = useState('')
-  const [parsedCvText, setParsedCvText] = useState('')
-  const fileRef = useRef<HTMLInputElement>(null)
-  const { setProfile } = useUserProfile()
-  const { setInterviewData } = useInterviewStore()
 
-  const handleCvFile = async (file: File) => {
-    const validTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ]
-    const validExtensions = ['.pdf', '.doc', '.docx']
-    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [resending, setResending] = useState(false)
+  const [resendMessage, setResendMessage] = useState('')
 
-    if (!validTypes.includes(file.type) && !validExtensions.includes(ext)) {
-      setCvError('Please upload a PDF or Word document (.pdf, .doc, .docx)')
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = window.setTimeout(() => setResendCooldown((value) => value - 1), 1000)
+    return () => window.clearTimeout(timer)
+  }, [resendCooldown])
+
+  const handleSignup = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setError('')
+    setResendMessage('')
+
+    const parsed = signupSchema.safeParse({
+      fullName,
+      email,
+      password,
+      confirmPassword,
+      targetRole,
+      field,
+    })
+
+    if (!parsed.success) {
+      setFieldErrors(zodFieldErrors(parsed.error))
+      return
+    }
+    setFieldErrors({})
+
+    const supabase = createClient()
+    if (!supabase) {
+      setError('Account creation is not configured in this environment. Use the interactive demo instead.')
       return
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setCvError('File size must be less than 10MB')
-      return
-    }
-
-    setCvFile(file)
-    setCvError('')
-    setCvUploading(true)
-    setCvSuccess(false)
-
+    setIsLoading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/parse-cv', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to process file')
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: parsed.data.email,
+        password: parsed.data.password,
+        options: {
+          data: {
+            full_name: parsed.data.fullName,
+            target_role: parsed.data.targetRole || null,
+            field: parsed.data.field || null,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        },
+      })
 
-      setParsedCvText(data.text)
-      setCvSuccess(true)
-    } catch (err: any) {
-      setCvError(err.message || 'Failed to process file. Please try again.')
-      setCvFile(null)
+      if (signUpError) {
+        const message = signUpError.message.toLowerCase()
+        if (message.includes('rate limit') || message.includes('too many')) {
+          setError('Too many attempts. Please wait a moment and try again.')
+        } else if (message.includes('already registered') || message.includes('already exists')) {
+          setError('That email cannot be used to create a new account. Try signing in instead.')
+        } else {
+          setError('We could not create your account right now. Please check your details and try again.')
+        }
+        return
+      }
+
+      setProfile({
+        fullName: parsed.data.fullName,
+        email: parsed.data.email,
+        targetRole: parsed.data.targetRole || '',
+        field: parsed.data.field || '',
+      })
+
+      if (data.session) {
+        router.replace('/dashboard')
+        router.refresh()
+        return
+      }
+
+      setPendingEmail(parsed.data.email)
+      setResendCooldown(60)
+    } catch {
+      setError('We could not create your account right now. Please try again.')
     } finally {
-      setCvUploading(false)
+      setIsLoading(false)
     }
   }
 
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const handleResend = async () => {
+    if (resendCooldown > 0 || resending) return
+    const supabase = createClient()
+    if (!supabase) return
 
-    // Save all signup data to the central profile store
-    setProfile({
-      fullName: nameValue,
-      email: emailValue,
-      currentPosition,
-      targetRole,
-      field,
-      cvText: parsedCvText,
-      cvFileName: cvFile?.name || null,
-    })
-
-    // Also feed CV into the interview store so other features can use it
-    if (parsedCvText) {
-      setInterviewData({ cvText: parsedCvText, cvFileName: cvFile?.name || null })
+    setResending(true)
+    setResendMessage('')
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: pendingEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        },
+      })
+      setResendMessage(
+        resendError ? 'Could not resend the email. Please try again shortly.' : 'Confirmation email sent.'
+      )
+      if (!resendError) setResendCooldown(60)
+    } catch {
+      setResendMessage('Could not resend the email. Please try again shortly.')
+    } finally {
+      setResending(false)
     }
+  }
 
-    setTimeout(() => {
-      document.cookie = 'demo_mode=true; path=/; max-age=86400'
-      window.location.href = '/dashboard'
-    }, 1200)
+  const handleDemo = async () => {
+    setError('')
+    try {
+      const response = await fetch('/api/auth/demo', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        setError(data.error || 'Demo mode is unavailable right now.')
+        return
+      }
+      window.location.assign('/dashboard')
+    } catch {
+      setError('Could not start the demo. Please try again.')
+    }
+  }
+
+  if (pendingEmail) {
+    return (
+      <AuthShell
+        eyebrow="Almost there"
+        title="Check your inbox."
+        subtitle="Confirm your email address to activate your Muwaazaf account."
+        bullets={['Secure email confirmation', 'No password is stored in your browser', 'Your workspace opens after verification']}
+        footer={
+          <p className="text-center text-[13px] text-el-dark-gray">
+            Already confirmed?{' '}
+            <Link href="/login" className="font-semibold text-el-black underline-offset-4 hover:underline">
+              Sign in
+            </Link>
+          </p>
+        }
+      >
+        <div className="rounded-2xl border border-el-border-light bg-el-near-white p-6">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-el-black">
+            <MailCheck className="h-5 w-5 text-white" aria-hidden="true" />
+          </div>
+          <p className="mt-4 text-[14px] leading-relaxed text-el-dark-gray">
+            We sent a confirmation link to
+          </p>
+          <p className="mt-1 break-all text-[15px] font-semibold text-el-black">{pendingEmail}</p>
+          <p className="mt-3 text-[13px] leading-relaxed text-el-warm-gray">
+            The link expires for security. Check your spam folder if it does not arrive within a
+            few minutes.
+          </p>
+
+          {resendMessage ? (
+            <p role="status" className="mt-4 text-[12px] font-medium text-emerald-700">
+              {resendMessage}
+            </p>
+          ) : null}
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleResend}
+            disabled={resendCooldown > 0 || resending}
+            className="mt-5 h-11 w-full rounded-xl border-el-border-light bg-white text-[13px] font-medium text-el-black shadow-none hover:bg-el-light-gray"
+          >
+            {resending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : null}
+            {resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : 'Resend confirmation email'}
+          </Button>
+        </div>
+      </AuthShell>
+    )
   }
 
   return (
-    <div className="min-h-screen flex bg-white">
-      {/* ─── Left Panel: White with interactive dot grid ─── */}
-      <div className="hidden lg:flex w-[45%] relative items-center justify-center p-16 overflow-hidden bg-white border-r border-slate-100">
-        <DotGrid />
-
-        <div className="relative z-10 max-w-md">
-          <div className="mb-10">
-            <div className="flex items-center gap-3 mb-8">
-              <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
-                <rect width="40" height="40" rx="10" fill="#0F172A" />
-                <path d="M12 28V14l8 6 8-6v14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="text-xl font-bold text-slate-900 tracking-tight">Muwaazaf</span>
-            </div>
-          </div>
-
-          <h2 className="text-4xl font-bold text-slate-900 mb-5 leading-[1.15] tracking-tight">
-            Your career,{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-500 to-slate-900">
-              elevated.
-            </span>
-          </h2>
-          <p className="text-slate-500 text-lg leading-relaxed mb-10">
-            AI-powered tools to match your CV, craft cover letters, and prepare for interviews — all in one platform.
-          </p>
-
-          <div className="space-y-4">
-            {[
-              'Smart CV matching with job descriptions',
-              'AI-generated cover letters in seconds',
-              'Mock interview simulation with feedback',
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="w-3 h-3 text-white" />
-                </div>
-                <span className="text-slate-600 text-sm">{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ─── Right Panel: Form ─── */}
-      <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-16 xl:px-24 py-10 overflow-y-auto">
-        <div className="mx-auto w-full max-w-lg">
-          <Link
-            href="/"
-            className="inline-flex items-center text-sm font-medium text-slate-400 hover:text-slate-900 mb-8 transition-colors"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to home
-          </Link>
-
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create your account</h1>
-            <p className="text-slate-500 mt-1.5 text-sm">Get started for free — no credit card required.</p>
-          </div>
-
-          <form onSubmit={handleSignup} className="space-y-4">
-            {/* Name + Email row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" type="text" placeholder="Omar Mokhtar" required className="h-12 rounded-xl" value={nameValue} onChange={(e) => setNameValue(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" required className="h-12 rounded-xl" value={emailValue} onChange={(e) => setEmailValue(e.target.value)} />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="Min 8 characters" required className="h-12 rounded-xl" />
-            </div>
-
-            {/* Dropdown selects */}
-            <div className="grid grid-cols-2 gap-4">
-              <SelectDropdown
-                id="current-position"
-                label="Current Position"
-                placeholder="Select your status"
-                options={CURRENT_POSITIONS}
-                value={currentPosition}
-                onChange={setCurrentPosition}
-              />
-              <SelectDropdown
-                id="target-role"
-                label="Target Role"
-                placeholder="Role you're seeking"
-                options={TARGET_ROLES}
-                value={targetRole}
-                onChange={setTargetRole}
-              />
-            </div>
-
-            <SelectDropdown
-              id="field"
-              label="Industry / Field"
-              placeholder="Select your field"
-              options={FIELDS}
-              value={field}
-              onChange={setField}
-            />
-
-            {/* CV Upload */}
-            <div className="space-y-2">
-              <Label>Upload CV <span className="text-slate-400 font-normal">(optional)</span></Label>
-              {cvFile && cvSuccess ? (
-                <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-                  <div className="p-2 bg-white rounded-lg">
-                    <FileText className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{cvFile.name}</p>
-                    <p className="text-xs text-emerald-600">Parsed successfully</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCvFile(null)
-                      setCvSuccess(false)
-                      if (fileRef.current) fileRef.current.value = ''
-                    }}
-                    className="p-1 rounded-md hover:bg-emerald-100 transition-colors"
-                  >
-                    <X className="w-4 h-4 text-slate-400" />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => !cvUploading && fileRef.current?.click()}
-                  className={`flex items-center gap-3 rounded-xl border-2 border-dashed p-4 cursor-pointer transition-all ${
-                    cvUploading
-                      ? 'border-slate-200 bg-slate-50'
-                      : 'border-slate-200 hover:border-slate-400 hover:bg-slate-50'
-                  }`}
-                >
-                  {cvUploading ? (
-                    <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
-                  ) : (
-                    <Upload className="w-5 h-5 text-slate-400" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">
-                      {cvUploading ? 'Processing...' : 'Click to upload PDF, DOC or DOCX'}
-                    </p>
-                    <p className="text-xs text-slate-400">Max file size: 10MB</p>
-                  </div>
-                </div>
-              )}
-              {cvError && (
-                <p className="text-red-500 text-xs font-medium mt-1">{cvError}</p>
-              )}
-              <input
-                ref={fileRef}
-                type="file"
-                className="hidden"
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                onChange={(e) => {
-                  const f = e.target.files?.[0]
-                  if (f) handleCvFile(f)
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Raw CV Text <span className="text-slate-400 font-normal">(fallback)</span></Label>
-              <textarea
-                className="w-full h-32 p-3 rounded-xl border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 text-sm font-mono text-slate-700 resize-y"
-                placeholder="Paste your CV text here if the upload fails or to provide it manually."
-                value={parsedCvText}
-                onChange={(e) => setParsedCvText(e.target.value)}
-              />
-            </div>
-
+    <AuthShell
+      eyebrow="Get started"
+      title="Your career, elevated."
+      subtitle="Create a private workspace for CV matching, applications, and interview practice."
+      bullets={[
+        'Free to start — no credit card required',
+        'Your CV and workspace stay in your browser',
+        'Built for the Lebanese and MENA job market',
+      ]}
+      footer={
+        <div className="space-y-4">
+          {!authConfigured ? (
             <Button
-              type="submit"
-              className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-all mt-2 shadow-lg shadow-slate-900/10"
-              disabled={isLoading}
+              type="button"
+              variant="outline"
+              onClick={handleDemo}
+              className="h-12 w-full rounded-xl border-el-border-light bg-el-near-white text-[14px] font-medium text-el-black shadow-none hover:bg-el-light-gray"
             >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
+              <PlayCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+              Explore the interactive demo
             </Button>
-          </form>
+          ) : null}
 
-          <p className="mt-6 text-center text-sm text-slate-400">
+          <p className="text-center text-[13px] text-el-dark-gray">
             Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-slate-900 hover:underline transition-colors">
+            <Link href="/login" className="font-semibold text-el-black underline-offset-4 hover:underline">
               Sign in
             </Link>
           </p>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <form onSubmit={handleSignup} noValidate className="space-y-4">
+        {error ? (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"
+          >
+            {error}
+          </div>
+        ) : null}
+
+        {!authConfigured ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] leading-relaxed text-amber-800">
+            Account creation is not configured on this deployment. The interactive demo is
+            fully available.
+          </div>
+        ) : null}
+
+        <div className="space-y-2">
+          <Label htmlFor="fullName" className="text-[13px] font-medium text-el-black">
+            Full name
+          </Label>
+          <Input
+            id="fullName"
+            type="text"
+            autoComplete="name"
+            placeholder="Omar Mokhtar"
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+            aria-invalid={Boolean(fieldErrors.fullName)}
+            className="h-12 rounded-xl border-el-border-light bg-white text-[15px] shadow-none focus-visible:ring-2 focus-visible:ring-el-black/20"
+          />
+          {fieldErrors.fullName ? (
+            <p role="alert" className="text-xs font-medium text-red-600">{fieldErrors.fullName}</p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-[13px] font-medium text-el-black">
+            Email address
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            aria-invalid={Boolean(fieldErrors.email)}
+            className="h-12 rounded-xl border-el-border-light bg-white text-[15px] shadow-none focus-visible:ring-2 focus-visible:ring-el-black/20"
+          />
+          {fieldErrors.email ? (
+            <p role="alert" className="text-xs font-medium text-red-600">{fieldErrors.email}</p>
+          ) : null}
+        </div>
+
+        <PasswordField
+          label="Password"
+          value={password}
+          onChange={setPassword}
+          error={fieldErrors.password}
+          autoComplete="new-password"
+          showStrength
+        />
+
+        <PasswordField
+          label="Confirm password"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          error={fieldErrors.confirmPassword}
+          autoComplete="new-password"
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="targetRole" className="text-[13px] font-medium text-el-black">
+              Target role <span className="font-normal text-el-warm-gray">(optional)</span>
+            </Label>
+            <select
+              id="targetRole"
+              value={targetRole}
+              onChange={(event) => setTargetRole(event.target.value)}
+              className={selectClassName}
+            >
+              <option value="">Select a role</option>
+              {TARGET_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="field" className="text-[13px] font-medium text-el-black">
+              Industry <span className="font-normal text-el-warm-gray">(optional)</span>
+            </Label>
+            <select
+              id="field"
+              value={field}
+              onChange={(event) => setField(event.target.value)}
+              className={selectClassName}
+            >
+              <option value="">Select an industry</option>
+              {FIELDS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <p className="flex items-start gap-2 text-[11px] leading-relaxed text-el-warm-gray">
+          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-600" aria-hidden="true" />
+          We use your details only to operate your workspace. You can clear all local data at any
+          time from your profile.
+        </p>
+
+        <Button
+          type="submit"
+          disabled={isLoading || !authConfigured}
+          className="h-12 w-full rounded-xl bg-el-black text-[14px] font-semibold text-white shadow-none transition-colors hover:bg-el-dark-gray disabled:opacity-60"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              Creating account…
+            </>
+          ) : (
+            <>
+              Create account
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+            </>
+          )}
+        </Button>
+      </form>
+    </AuthShell>
   )
 }

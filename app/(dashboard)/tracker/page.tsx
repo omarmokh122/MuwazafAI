@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, GripVertical, Trash2, Calendar, Building, MapPin } from 'lucide-react'
+import { Plus, Trash2, Building, MapPin } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -36,17 +36,20 @@ export default function TrackerPage() {
 
   // Load from local storage
   useEffect(() => {
-    const savedJobs = localStorage.getItem('muwaazaf_tracker_jobs')
-    if (savedJobs) {
-      setJobs(JSON.parse(savedJobs))
-    } else {
-      // Demo data
-      setJobs([
-        { id: '1', company: 'TechCorp', title: 'Frontend Developer', location: 'Beirut', status: 'Applied', date: new Date().toISOString() },
-        { id: '2', company: 'Startup Inc', title: 'React Engineer', location: 'Remote', status: 'Interviewing', date: new Date().toISOString() }
-      ])
-    }
-    setIsLoaded(true)
+    const frame = requestAnimationFrame(() => {
+      const savedJobs = localStorage.getItem('muwaazaf_tracker_jobs')
+      if (savedJobs) {
+        setJobs(JSON.parse(savedJobs))
+      } else {
+        // Demo data
+        setJobs([
+          { id: '1', company: 'TechCorp', title: 'Frontend Developer', location: 'Beirut', status: 'Applied', date: new Date().toISOString() },
+          { id: '2', company: 'Startup Inc', title: 'React Engineer', location: 'Remote', status: 'Interviewing', date: new Date().toISOString() }
+        ])
+      }
+      setIsLoaded(true)
+    })
+    return () => cancelAnimationFrame(frame)
   }, [])
 
   // Save to local storage

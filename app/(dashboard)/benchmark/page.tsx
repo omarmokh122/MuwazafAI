@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { LineChart, Search, Upload, Loader2, DollarSign, Globe, MapPin, TrendingUp, Sparkles, Building2, CheckCircle2, FileText, X, ArrowLeft, Bot, User, Send } from 'lucide-react'
+import { LineChart, Upload, Loader2, Globe, MapPin, TrendingUp, Sparkles, FileText, X, ArrowLeft, Bot, User, Send } from 'lucide-react'
+import { renderSafeMarkdown } from '@/lib/markdown'
 
 type BenchmarkData = {
   roleName: string
@@ -93,8 +94,8 @@ export default function SalaryBenchmarkPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to generate benchmark')
 
       setBenchmark(data)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate benchmark')
     } finally {
       setLoading(false)
     }
@@ -117,8 +118,8 @@ export default function SalaryBenchmarkPage() {
         if (!uploadRes.ok) throw new Error(uploadData.error || 'Failed to parse document')
         
         await runBenchmark('jd', uploadData.text)
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to parse document')
         setLoading(false)
       }
     } else if (jdText.trim()) {
@@ -152,7 +153,7 @@ export default function SalaryBenchmarkPage() {
         role: 'assistant',
         content: data.response
       }])
-    } catch (error) {
+    } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: "I'm having trouble analyzing the data right now. Please try again later."
@@ -437,7 +438,10 @@ export default function SalaryBenchmarkPage() {
                         : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'
                     }`}>
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm max-w-none whitespace-pre-wrap text-[11px]" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>') }} />
+                        <div
+                          className="prose prose-sm max-w-none text-[11px]"
+                          dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(msg.content) }}
+                        />
                       ) : (
                         msg.content
                       )}

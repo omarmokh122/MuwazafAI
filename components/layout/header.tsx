@@ -1,9 +1,10 @@
 'use client'
 
+import { useState, type FormEvent } from 'react'
 import { Bell, Search, LogOut, Menu } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -14,23 +15,43 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
 import { useUserProfile } from '@/lib/store/user-profile'
-import { createClient } from '@/lib/supabase/client'
+import { signOutEverywhere } from '@/lib/client/auth'
+
+const DESTINATIONS = [
+  { name: 'Dashboard', href: '/dashboard' },
+  { name: 'Job Tracker', href: '/tracker' },
+  { name: 'CV Matcher', href: '/scout' },
+  { name: 'Interview Prep', href: '/interview-prep' },
+  { name: 'Role Skillsets', href: '/skillsets' },
+  { name: 'Cover Letters', href: '/application' },
+  { name: 'Labor Rights', href: '/rights' },
+  { name: 'Salary Benchmark', href: '/benchmark' },
+  { name: 'Resources', href: '/resources' },
+  { name: 'Profile', href: '/profile' },
+]
 
 export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter()
   const { fullName, email, initials } = useUserProfile()
-  const supabase = createClient()
-  const { clearProfile } = useUserProfile()
+  const [query, setQuery] = useState('')
 
   const displayName = fullName || 'Guest User'
   const displayEmail = email || 'demo@muwaazaf.com'
   const avatarInitial = initials()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    document.cookie = 'demo_mode=; path=/; max-age=0'
-    clearProfile()
-    window.location.href = '/'
+    await signOutEverywhere()
+  }
+
+  const handleSearch = (event: FormEvent) => {
+    event.preventDefault()
+    const needle = query.trim().toLowerCase()
+    if (!needle) return
+    const match = DESTINATIONS.find((item) => item.name.toLowerCase().includes(needle))
+    if (match) {
+      router.push(match.href)
+      setQuery('')
+    }
   }
 
   return (
@@ -41,14 +62,17 @@ export function Header({ onMenuClick }: { onMenuClick?: () => void }) {
             <Menu className="h-6 w-6 text-el-black" />
           </Button>
         )}
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <form onSubmit={handleSearch} role="search" className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <Input 
             type="search" 
-            placeholder="Search tools, resources, or history..." 
+            aria-label="Jump to a tool"
+            placeholder="Jump to a tool (e.g. tracker, rights)…" 
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
             className="w-full bg-el-white text-[15px] text-el-black pl-9 border-none shadow-el-inset-dark rounded-[12px] focus-visible:ring-1 focus-visible:ring-blue-300"
           />
-        </div>
+        </form>
       </div>
       
       <div className="flex items-center gap-4 ml-4">
