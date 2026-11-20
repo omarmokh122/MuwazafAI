@@ -22,7 +22,7 @@ jobs:
       DT_URL: ${{ secrets.DEPENDENCY_TRACK_URL }}
       DT_API_KEY: ${{ secrets.DEPENDENCY_TRACK_API_KEY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
