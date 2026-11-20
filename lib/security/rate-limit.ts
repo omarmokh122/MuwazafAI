@@ -9,6 +9,16 @@ const globalStore = globalThis as typeof globalThis & {
 const store: RateLimitStore = (globalStore.__muwaazafRateLimit ??= new Map())
 const MAX_BUCKETS = 20_000
 
+const UPSTASH_KEY_PREFIX = 'muwaazaf:rl:'
+const UPSTASH_TIMEOUT_MS = 1_500
+const FALLBACK_WARN_INTERVAL_MS = 60_000
+
+let lastFallbackWarnAt = 0
+
+type UpstashConfig = { url: string; token: string }
+
+type PipelineEntry = { result?: unknown; error?: string }
+
 export type RateLimitResult = {
   ok: boolean
   remaining: number
@@ -31,7 +41,7 @@ function sweep(now: number) {
   }
 }
 
-export function rateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
+function memoryRateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
   const now = Date.now()
   sweep(now)
 
@@ -58,6 +68,95 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
     retryAfter: 0,
     resetAt: existing.resetAt,
   }
+}
+
+function readUpstashConfig(): UpstashConfig | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim().replace(/\/+$/, '')
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
+  return url && token ? { url, token } : null
+}
+
+function normalizeKey(key: string): string {
+  return key.replace(/[^a-zA-Z0-9:._-]/g, '_').slice(0, 160)
+}
+
+function warnFallback(error: unknown) {
+  const now = Date.now()
+  if (now - lastFallbackWarnAt < FALLBACK_WARN_INTERVAL_MS) return
+  lastFallbackWarnAt = now
+  console.warn('[rate-limit] Upstash unavailable; using in-memory fallback', error)
+}
+
+async function postPipeline(
+  config: UpstashConfig,
+  body: unknown
+): Promise<PipelineEntry[] | null> {
+  const response = await fetch(`${config.url}/pipeline`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(UPSTASH_TIMEOUT_MS),
+    cache: 'no-store',
+  })
+  if (!response.ok) return null
+  const payload = (await response.json()) as unknown
+  return Array.isArray(payload) ? (payload as PipelineEntry[]) : null
+}
+
+async function upstashRateLimit(
+  config: UpstashConfig,
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<RateLimitResult | null> {
+  const redisKey = `${UPSTASH_KEY_PREFIX}${normalizeKey(key)}`
+  const payload = await postPipeline(config, [
+    ['INCR', redisKey],
+    ['PEXPIRE', redisKey, String(windowMs), 'NX'],
+    ['PTTL', redisKey],
+  ])
+  if (!payload) return null
+
+  const count = Number(payload[0]?.result)
+  if (!Number.isInteger(count) || count < 1) return null
+
+  // PEXPIRE NX is unsupported on older Redis; set the TTL without NX on the first hit.
+  if (payload[1]?.error && count === 1) {
+    await postPipeline(config, [['PEXPIRE', redisKey, String(windowMs)]])
+  }
+
+  const ttl = Number(payload[2]?.result)
+  const remainingTtl = Number.isFinite(ttl) && ttl > 0 ? ttl : windowMs
+  const ok = count <= limit
+
+  return {
+    ok,
+    remaining: Math.max(0, limit - count),
+    retryAfter: ok ? 0 : Math.max(1, Math.ceil(remainingTtl / 1000)),
+    resetAt: Date.now() + remainingTtl,
+  }
+}
+
+export async function rateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): Promise<RateLimitResult> {
+  const config = readUpstashConfig()
+  if (config) {
+    try {
+      const result = await upstashRateLimit(config, key, limit, windowMs)
+      if (result) return result
+      warnFallback('unexpected Upstash response')
+    } catch (error) {
+      warnFallback(error)
+    }
+  }
+
+  return memoryRateLimit(key, limit, windowMs)
 }
 
 export function getClientIp(headers: Headers): string {

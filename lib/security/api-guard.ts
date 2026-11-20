@@ -49,20 +49,20 @@ function tooManyRequests(retryAfter: number, remaining = 0): Response {
   })
 }
 
-function checkRateLimit(
+async function checkRateLimit(
   request: NextRequest,
   options: BaseGuardOptions,
   session: RequestSession | null
-): Response | null {
+): Promise<Response | null> {
   const ip = getClientIp(request.headers)
   const limit = options.limit ?? DEFAULT_LIMIT
   const windowMs = options.windowMs ?? DEFAULT_WINDOW_MS
 
-  const byIp = rateLimit(`${options.scope}:ip:${ip}`, limit, windowMs)
+  const byIp = await rateLimit(`${options.scope}:ip:${ip}`, limit, windowMs)
   if (!byIp.ok) return tooManyRequests(byIp.retryAfter)
 
   if (session?.userId) {
-    const byUser = rateLimit(`${options.scope}:user:${session.userId}`, limit, windowMs)
+    const byUser = await rateLimit(`${options.scope}:user:${session.userId}`, limit, windowMs)
     if (!byUser.ok) return tooManyRequests(byUser.retryAfter)
   }
 
@@ -84,7 +84,7 @@ async function preflight(
     return apiError('Authentication required. Please sign in again.', 401)
   }
 
-  const limited = checkRateLimit(request, options, session)
+  const limited = await checkRateLimit(request, options, session)
   if (limited) return limited
 
   return {

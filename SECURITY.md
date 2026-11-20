@@ -49,7 +49,7 @@ Please report suspected vulnerabilities privately to the project maintainers. Do
 
 ## Operational notes
 
-- Rate limiting is in-memory and per serverless instance. For strict global limits, back it with Redis/Upstash.
+- Rate limiting uses Upstash Redis (REST) when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set, giving global limits across serverless instances. Without them, it falls back to an in-memory, per-instance limiter.
 - The CSP allows inline scripts because Next.js bootstraps hydration inline; if you move to nonces, update `lib/security/http.ts`.
 - Demo mode is intended for evaluation. Disable it in production by unsetting all signing secrets or by removing the call site if it is not needed.
 - Rotate `AUTH_SECRET`, `ADMIN_SECRET`, `GEMINI_API_KEY`, and the Supabase service-role key if exposure is suspected. Rotating `AUTH_SECRET` invalidates existing demo sessions.
