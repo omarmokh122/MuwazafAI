@@ -70,10 +70,21 @@ function memoryRateLimit(key: string, limit: number, windowMs: number): RateLimi
   }
 }
 
+function cleanEnvValue(value: string | undefined): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed) return undefined
+  const unquoted = trimmed.replace(/^(['"])([\s\S]*)\1$/, '$2').trim()
+  return unquoted || undefined
+}
+
 function readUpstashConfig(): UpstashConfig | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL?.trim().replace(/\/+$/, '')
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
-  return url && token ? { url, token } : null
+  const rawUrl = cleanEnvValue(process.env.UPSTASH_REDIS_REST_URL)
+  const token = cleanEnvValue(process.env.UPSTASH_REDIS_REST_TOKEN)
+  if (!rawUrl || !token) return null
+
+  const withProtocol = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`
+  const url = withProtocol.replace(/\/+$/, '')
+  return { url, token }
 }
 
 function normalizeKey(key: string): string {
