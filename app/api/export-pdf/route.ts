@@ -2,6 +2,7 @@ import PDFDocument from 'pdfkit'
 import { withJsonGuard } from '@/lib/security/api-guard'
 import { apiError } from '@/lib/security/http'
 import { exportPdfRequestSchema } from '@/lib/security/schemas'
+import { describeError, logEvent } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -52,7 +53,7 @@ export const POST = withJsonGuard(
         },
       })
     } catch (error) {
-      console.error('[export-pdf] PDF generation failed', error)
+      logEvent('error', 'export_pdf_failed', { error: describeError(error) })
       return apiError('Failed to generate PDF. Please try again.', 500)
     }
   }

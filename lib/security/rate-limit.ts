@@ -1,3 +1,5 @@
+import { describeError, logEvent } from '@/lib/observability/logger'
+
 type Bucket = { count: number; resetAt: number }
 
 type RateLimitStore = Map<string, Bucket>
@@ -95,7 +97,7 @@ function warnFallback(error: unknown) {
   const now = Date.now()
   if (now - lastFallbackWarnAt < FALLBACK_WARN_INTERVAL_MS) return
   lastFallbackWarnAt = now
-  console.warn('[rate-limit] Upstash unavailable; using in-memory fallback', error)
+  logEvent('warn', 'rate_limit_fallback', { error: describeError(error) })
 }
 
 async function postPipeline(

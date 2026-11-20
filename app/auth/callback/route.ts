@@ -3,6 +3,7 @@ import { safeRedirectPath } from '@/lib/security/redirect'
 import { applySecurityHeaders } from '@/lib/security/http'
 import { isSupabaseConfigured } from '@/lib/security/session'
 import { createClient } from '@/lib/supabase/server'
+import { describeError, logEvent } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
 
@@ -21,14 +22,15 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      logEvent('info', 'auth_callback_success', { next })
       return applySecurityHeaders(
         NextResponse.redirect(new URL(next, request.url))
       )
     }
 
-    console.error('[auth:callback] code exchange failed', error.message)
+    logEvent('warn', 'auth_callback_exchange_failed', { error: error.message })
   } catch (error) {
-    console.error('[auth:callback] unexpected failure', error)
+    logEvent('error', 'auth_callback_unexpected_failure', { error: describeError(error) })
   }
 
   return applySecurityHeaders(

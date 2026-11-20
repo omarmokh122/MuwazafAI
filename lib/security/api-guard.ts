@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import type { z } from 'zod'
 import { MAX_JSON_BYTES } from './constants'
 import { apiError, isSameOrigin } from './http'
+import { describeError, logEvent } from '@/lib/observability/logger'
 import { getClientIp, rateLimit } from './rate-limit'
 import { getRequestSession, type RequestSession } from './session'
 
@@ -41,6 +42,41 @@ type FormHandler = (
 
 const DEFAULT_LIMIT = 20
 const DEFAULT_WINDOW_MS = 60_000
+
+type RequestMeta = {
+  requestId: string
+  scope: string
+  method: string
+  path: string
+  startedAt: number
+  session: RequestSession | null
+}
+
+function startRequest(request: NextRequest, scope: string): RequestMeta {
+  return {
+    requestId: crypto.randomUUID(),
+    scope,
+    method: request.method,
+    path: request.nextUrl.pathname,
+    startedAt: Date.now(),
+    session: null,
+  }
+}
+
+function finish(meta: RequestMeta, response: Response): Response {
+  const level = response.status >= 500 ? 'error' : response.status >= 400 ? 'warn' : 'info'
+  logEvent(level, 'api_request', {
+    requestId: meta.requestId,
+    scope: meta.scope,
+    method: meta.method,
+    path: meta.path,
+    status: response.status,
+    durationMs: Date.now() - meta.startedAt,
+    userId: meta.session?.userId,
+    demo: meta.session?.demo,
+  })
+  return response
+}
 
 function tooManyRequests(retryAfter: number, remaining = 0): Response {
   return apiError('Too many requests. Please slow down and try again shortly.', 429, {
@@ -129,10 +165,14 @@ async function readJson(request: NextRequest, maxBytes: number): Promise<Respons
   }
 }
 
-function logFailure(scope: string, error: unknown) {
-  const requestId = crypto.randomUUID()
-  console.error(`[api:${scope}] request ${requestId} failed`, error)
-  return apiError(`Something went wrong. Please try again. (ref: ${requestId})`, 500)
+function logFailure(meta: RequestMeta, error: unknown): Response {
+  logEvent('error', 'api_failure', {
+    requestId: meta.requestId,
+    scope: meta.scope,
+    path: meta.path,
+    error: describeError(error),
+  })
+  return apiError(`Something went wrong. Please try again. (ref: ${meta.requestId})`, 500)
 }
 
 export function withJsonGuard<T>(
@@ -140,25 +180,30 @@ export function withJsonGuard<T>(
   handler: JsonHandler<T>
 ): (request: NextRequest) => Promise<Response> {
   return async (request: NextRequest) => {
+    const meta = startRequest(request, options.scope)
     const pre = await preflight(request, options)
-    if (pre instanceof Response) return pre
+    if (pre instanceof Response) return finish(meta, pre)
+    meta.session = pre.session
 
     try {
       const body = await readJson(request, options.maxBytes ?? MAX_JSON_BYTES)
-      if (body instanceof Response) return body
+      if (body instanceof Response) return finish(meta, body)
 
       const parsed = options.schema.safeParse(body)
       if (!parsed.success) {
-        return apiError('Invalid request. Please check the submitted fields.', 400)
+        return finish(
+          meta,
+          apiError('Invalid request. Please check the submitted fields.', 400)
+        )
       }
 
       const response = await handler(request, parsed.data, pre)
-      return finalize(response, options.limit ?? DEFAULT_LIMIT)
+      return finish(meta, finalize(response, options.limit ?? DEFAULT_LIMIT))
     } catch (error) {
       if (error instanceof DOMException && error.name === 'TimeoutError') {
-        return apiError('The request timed out. Please try again.', 504)
+        return finish(meta, apiError('The request timed out. Please try again.', 504))
       }
-      return logFailure(options.scope, error)
+      return finish(meta, logFailure(meta, error))
     }
   }
 }
@@ -173,14 +218,16 @@ export function withGetGuard(
   handler: GetHandler
 ): (request: NextRequest) => Promise<Response> {
   return async (request: NextRequest) => {
+    const meta = startRequest(request, options.scope)
     const pre = await preflight(request, options)
-    if (pre instanceof Response) return pre
+    if (pre instanceof Response) return finish(meta, pre)
+    meta.session = pre.session
 
     try {
       const response = await handler(request, pre)
-      return finalize(response, options.limit ?? DEFAULT_LIMIT)
+      return finish(meta, finalize(response, options.limit ?? DEFAULT_LIMIT))
     } catch (error) {
-      return logFailure(options.scope, error)
+      return finish(meta, logFailure(meta, error))
     }
   }
 }
@@ -190,29 +237,31 @@ export function withFormGuard(
   handler: FormHandler
 ): (request: NextRequest) => Promise<Response> {
   return async (request: NextRequest) => {
+    const meta = startRequest(request, options.scope)
     const pre = await preflight(request, options)
-    if (pre instanceof Response) return pre
+    if (pre instanceof Response) return finish(meta, pre)
+    meta.session = pre.session
 
     try {
       const contentType = request.headers.get('content-type') || ''
       if (!contentType.includes('multipart/form-data')) {
-        return apiError('Content-Type must be multipart/form-data.', 415)
+        return finish(meta, apiError('Content-Type must be multipart/form-data.', 415))
       }
 
       const declared = Number(request.headers.get('content-length') || 0)
       const maxBytes = options.maxBytes ?? MAX_JSON_BYTES
       if (Number.isFinite(declared) && declared > maxBytes) {
-        return apiError('Upload is too large.', 413)
+        return finish(meta, apiError('Upload is too large.', 413))
       }
 
       const formData = await request.formData()
       const response = await handler(request, formData, pre)
-      return finalize(response, options.limit ?? DEFAULT_LIMIT)
+      return finish(meta, finalize(response, options.limit ?? DEFAULT_LIMIT))
     } catch (error) {
       if (error instanceof DOMException && error.name === 'TimeoutError') {
-        return apiError('The request timed out. Please try again.', 504)
+        return finish(meta, apiError('The request timed out. Please try again.', 504))
       }
-      return logFailure(options.scope, error)
+      return finish(meta, logFailure(meta, error))
     }
   }
 }

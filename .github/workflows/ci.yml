@@ -19,6 +19,8 @@ jobs:
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       CI: 'true'
+      DT_URL: ${{ secrets.DEPENDENCY_TRACK_URL }}
+      DT_API_KEY: ${{ secrets.DEPENDENCY_TRACK_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -37,3 +39,27 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Generate SBOM (CycloneDX)
+        run: npx --yes @cyclonedx/cyclonedx-npm@7.0.1 --output-file sbom.json --output-format json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.json
+          retention-days: 30
+
+      - name: Upload SBOM to Dependency-Track
+        if: ${{ env.DT_URL != '' && env.DT_API_KEY != '' }}
+        run: |
+          jq -n \
+            --arg bom "$(base64 -w0 sbom.json)" \
+            --arg version "${GITHUB_SHA::7}" \
+            '{projectName: "MuwazafAI", projectVersion: $version, autoCreate: true, bom: $bom}' \
+            > dt-payload.json
+          curl -sS --fail-with-body \
+            -X POST "$DT_URL/api/v1/bom" \
+            -H "X-Api-Key: $DT_API_KEY" \
+            -H "Content-Type: application/json" \
+            --data @dt-payload.json

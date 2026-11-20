@@ -2,6 +2,7 @@ import { withFormGuard } from '@/lib/security/api-guard'
 import { apiError, json } from '@/lib/security/http'
 import { MAX_UPLOAD_BYTES } from '@/lib/security/constants'
 import { validateUpload } from '@/lib/security/upload'
+import { describeError, logEvent } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -41,7 +42,7 @@ export const POST = withFormGuard(
         const result = await parser.getText()
         parsedText = result.text || ''
       } catch (error) {
-        console.error('[parse-cv] PDF parse failed', error)
+        logEvent('warn', 'parse_cv_pdf_failed', { error: describeError(error) })
         return apiError(
           'Could not read this PDF. It may be corrupted. Please try a different file.',
           422
@@ -61,7 +62,7 @@ export const POST = withFormGuard(
         const result = await mammoth.extractRawText({ buffer: upload.buffer })
         parsedText = result.value || ''
       } catch (error) {
-        console.error('[parse-cv] DOCX parse failed', error)
+        logEvent('warn', 'parse_cv_docx_failed', { error: describeError(error) })
         return apiError(
           'Could not read this Word document. Please ensure it is a valid .docx file.',
           422

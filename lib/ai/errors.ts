@@ -1,10 +1,15 @@
 import { ZodError } from 'zod'
 import { apiError } from '@/lib/security/http'
+import { describeError, logEvent } from '@/lib/observability/logger'
 import { isAbortError, MissingApiKeyError } from './gemini'
 
 export function aiErrorResponse(scope: string, error: unknown): Response {
   const requestId = crypto.randomUUID()
-  console.error(`[ai:${scope}] request ${requestId} failed`, error)
+  logEvent(error instanceof MissingApiKeyError ? 'warn' : 'error', 'ai_failure', {
+    scope,
+    requestId,
+    error: describeError(error),
+  })
 
   if (error instanceof MissingApiKeyError) {
     return apiError('AI features are not configured on this deployment.', 503)

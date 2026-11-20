@@ -41,6 +41,17 @@ Please report suspected vulnerabilities privately to the project maintainers. Do
 - `X-Powered-By` is disabled.
 - `noindex` is set on API and authenticated responses.
 
+### Logging and observability
+
+- Structured JSON events are written to stdout and, when `ELASTIC_LOGS_URL` / `ELASTIC_LOGS_API_KEY` are set, shipped to Elasticsearch after the response completes.
+- Events include route, status, duration, request ID, and a pseudonymous user ID. Request bodies, emails, message contents, and IP addresses are never logged.
+- Every API request is logged once on completion; failures carry a request reference that matches the client-facing error.
+
+### Supply chain
+
+- CI generates a CycloneDX SBOM on every push and uploads it to OWASP Dependency-Track when the DT secrets are configured.
+- Dependabot opens weekly grouped PRs for npm packages and GitHub Actions.
+
 ### Data limits
 
 - Labor-law PDF download is capped at 12 MB and 20s timeout.

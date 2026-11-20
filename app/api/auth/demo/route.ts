@@ -8,6 +8,7 @@ import {
 } from '@/lib/security/constants'
 import { createDemoToken } from '@/lib/security/demo-session'
 import { apiError, json } from '@/lib/security/http'
+import { logEvent } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
 
@@ -25,11 +26,14 @@ export const POST = withJsonGuard(
   async () => {
     const token = await createDemoToken()
     if (!token) {
+      logEvent('warn', 'auth_demo_unavailable')
       return apiError(
         'Demo mode is not configured on this deployment. Please sign in with an account.',
         503
       )
     }
+
+    logEvent('info', 'auth_demo_issued', { ttlSeconds: DEMO_TTL_SECONDS })
 
     const response = json({ ok: true, expiresIn: DEMO_TTL_SECONDS })
 

@@ -8,6 +8,7 @@ import {
 import { json } from '@/lib/security/http'
 import { isSupabaseConfigured } from '@/lib/security/session'
 import { createClient } from '@/lib/supabase/server'
+import { describeError, logEvent } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
 
@@ -28,9 +29,11 @@ export const POST = withJsonGuard(
         const supabase = await createClient()
         await supabase.auth.signOut()
       } catch (error) {
-        console.error('[auth:logout] Supabase sign-out failed', error)
+        logEvent('error', 'auth_logout_failed', { error: describeError(error) })
       }
     }
+
+    logEvent('info', 'auth_logout')
 
     const response = json({ ok: true })
 

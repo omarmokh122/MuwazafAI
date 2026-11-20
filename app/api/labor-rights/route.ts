@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { withGetGuard } from '@/lib/security/api-guard'
 import { apiError, json } from '@/lib/security/http'
 import { getLaborRightsCategories, syncLaborLaw } from '@/lib/labor-rights-helper'
+import { describeError, logEvent } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -42,7 +43,7 @@ export const GET = withGetGuard(
           synced: result.synced,
         })
       } catch (error) {
-        console.error('[labor-rights] sync failed', error)
+        logEvent('error', 'labor_law_sync_route_failed', { error: describeError(error) })
         return apiError('Failed to sync labor-law data.', 500)
       }
     }
@@ -51,7 +52,7 @@ export const GET = withGetGuard(
       const categories = await getLaborRightsCategories()
       return json(categories)
     } catch (error) {
-      console.error('[labor-rights] read failed', error)
+      logEvent('error', 'labor_law_read_failed', { error: describeError(error) })
       return apiError('Failed to load labor-rights data.', 500)
     }
   }

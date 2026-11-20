@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { describeError, logEvent } from '@/lib/observability/logger';
 
 const PDF_URL = 'https://www.labor.gov.lb/Temp/Files/574b61dd-1233-4507-9da1-d4a3e3a6129a.pdf';
 const MAX_PDF_BYTES = 12 * 1024 * 1024;
@@ -48,7 +49,7 @@ export async function getLaborLawText(): Promise<string> {
       fs.writeFileSync(TEXT_PATH, text);
       return text;
     } catch (e) {
-      console.error('Failed to parse cached PDF, falling back to dynamic sync', e);
+      logEvent('warn', 'labor_law_cached_pdf_parse_failed', { error: describeError(e) });
     }
   }
 
@@ -70,13 +71,13 @@ export async function getLaborRightsCategories(): Promise<unknown> {
     try {
       return JSON.parse(cleanJsonString(cached));
     } catch (e) {
-      console.error('Error parsing structured labor rights JSON from cache. Triggering forced sync...', e);
+      logEvent('warn', 'labor_law_cached_json_invalid', { error: describeError(e) });
       try {
         if (fs.existsSync(JSON_PATH)) {
           fs.unlinkSync(JSON_PATH);
         }
       } catch (unlinkError) {
-        console.error('Failed to delete corrupt JSON file:', unlinkError);
+        logEvent('warn', 'labor_law_cache_unlink_failed', { error: describeError(unlinkError) });
       }
     }
   }
@@ -88,7 +89,7 @@ export async function getLaborRightsCategories(): Promise<unknown> {
     try {
       return JSON.parse(cleanJsonString(synced));
     } catch (e) {
-      console.error('Error parsing newly synced structured labor rights JSON:', e);
+      logEvent('error', 'labor_law_synced_json_invalid', { error: describeError(e) });
     }
   }
   return { categories: [] };
@@ -96,7 +97,7 @@ export async function getLaborRightsCategories(): Promise<unknown> {
 
 export async function syncLaborLaw(force: boolean = false): Promise<{ synced: boolean; message: string }> {
   ensureDataDir();
-  console.log('Syncing Lebanese Labor Law from:', PDF_URL);
+  logEvent('info', 'labor_law_sync_started', { force });
   
   try {
     const res = await fetch(PDF_URL, {
@@ -201,7 +202,7 @@ Only return the JSON object, do not wrap in markdown or anything else.`;
     
     return { synced: true, message: 'Successfully downloaded PDF, parsed text, and regenerated structured JSON via Gemini.' };
   } catch (error) {
-    console.error('Error syncing Labor Law PDF:', error);
+    logEvent('error', 'labor_law_sync_failed', { error: describeError(error) });
     return { synced: false, message: `Sync failed: ${error instanceof Error ? error.message : 'unknown error'}` };
   }
 }
