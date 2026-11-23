@@ -63,9 +63,9 @@ function startRequest(request: NextRequest, scope: string): RequestMeta {
   }
 }
 
-function finish(meta: RequestMeta, response: Response): Response {
+async function finish(meta: RequestMeta, response: Response): Promise<Response> {
   const level = response.status >= 500 ? 'error' : response.status >= 400 ? 'warn' : 'info'
-  logEvent(level, 'api_request', {
+  await logEvent(level, 'api_request', {
     requestId: meta.requestId,
     scope: meta.scope,
     method: meta.method,
@@ -165,8 +165,8 @@ async function readJson(request: NextRequest, maxBytes: number): Promise<Respons
   }
 }
 
-function logFailure(meta: RequestMeta, error: unknown): Response {
-  logEvent('error', 'api_failure', {
+async function logFailure(meta: RequestMeta, error: unknown): Promise<Response> {
+  await logEvent('error', 'api_failure', {
     requestId: meta.requestId,
     scope: meta.scope,
     path: meta.path,
@@ -203,7 +203,7 @@ export function withJsonGuard<T>(
       if (error instanceof DOMException && error.name === 'TimeoutError') {
         return finish(meta, apiError('The request timed out. Please try again.', 504))
       }
-      return finish(meta, logFailure(meta, error))
+      return finish(meta, await logFailure(meta, error))
     }
   }
 }
@@ -227,7 +227,7 @@ export function withGetGuard(
       const response = await handler(request, pre)
       return finish(meta, finalize(response, options.limit ?? DEFAULT_LIMIT))
     } catch (error) {
-      return finish(meta, logFailure(meta, error))
+      return finish(meta, await logFailure(meta, error))
     }
   }
 }
@@ -261,7 +261,7 @@ export function withFormGuard(
       if (error instanceof DOMException && error.name === 'TimeoutError') {
         return finish(meta, apiError('The request timed out. Please try again.', 504))
       }
-      return finish(meta, logFailure(meta, error))
+      return finish(meta, await logFailure(meta, error))
     }
   }
 }

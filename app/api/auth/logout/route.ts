@@ -29,11 +29,11 @@ export const POST = withJsonGuard(
         const supabase = await createClient()
         await supabase.auth.signOut()
       } catch (error) {
-        logEvent('error', 'auth_logout_failed', { error: describeError(error) })
+        await logEvent('error', 'auth_logout_failed', { error: describeError(error) })
       }
     }
 
-    logEvent('info', 'auth_logout')
+    await logEvent('info', 'auth_logout')
 
     const response = json({ ok: true })
 

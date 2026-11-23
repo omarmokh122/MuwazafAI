@@ -43,7 +43,7 @@ export const GET = withGetGuard(
           synced: result.synced,
         })
       } catch (error) {
-        logEvent('error', 'labor_law_sync_route_failed', { error: describeError(error) })
+        await logEvent('error', 'labor_law_sync_route_failed', { error: describeError(error) })
         return apiError('Failed to sync labor-law data.', 500)
       }
     }
@@ -52,7 +52,7 @@ export const GET = withGetGuard(
       const categories = await getLaborRightsCategories()
       return json(categories)
     } catch (error) {
-      logEvent('error', 'labor_law_read_failed', { error: describeError(error) })
+      await logEvent('error', 'labor_law_read_failed', { error: describeError(error) })
       return apiError('Failed to load labor-rights data.', 500)
     }
   }

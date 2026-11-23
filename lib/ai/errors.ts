@@ -3,9 +3,9 @@ import { apiError } from '@/lib/security/http'
 import { describeError, logEvent } from '@/lib/observability/logger'
 import { isAbortError, MissingApiKeyError } from './gemini'
 
-export function aiErrorResponse(scope: string, error: unknown): Response {
+export async function aiErrorResponse(scope: string, error: unknown): Promise<Response> {
   const requestId = crypto.randomUUID()
-  logEvent(error instanceof MissingApiKeyError ? 'warn' : 'error', 'ai_failure', {
+  await logEvent(error instanceof MissingApiKeyError ? 'warn' : 'error', 'ai_failure', {
     scope,
     requestId,
     error: describeError(error),

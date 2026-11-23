@@ -93,11 +93,11 @@ function normalizeKey(key: string): string {
   return key.replace(/[^a-zA-Z0-9:._-]/g, '_').slice(0, 160)
 }
 
-function warnFallback(error: unknown) {
+async function warnFallback(error: unknown) {
   const now = Date.now()
   if (now - lastFallbackWarnAt < FALLBACK_WARN_INTERVAL_MS) return
   lastFallbackWarnAt = now
-  logEvent('warn', 'rate_limit_fallback', { error: describeError(error) })
+  await logEvent('warn', 'rate_limit_fallback', { error: describeError(error) })
 }
 
 async function postPipeline(
@@ -163,9 +163,9 @@ export async function rateLimit(
     try {
       const result = await upstashRateLimit(config, key, limit, windowMs)
       if (result) return result
-      warnFallback('unexpected Upstash response')
+      await warnFallback('unexpected Upstash response')
     } catch (error) {
-      warnFallback(error)
+      await warnFallback(error)
     }
   }
 

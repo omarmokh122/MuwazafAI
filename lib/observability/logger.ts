@@ -1,9 +1,9 @@
-import { after } from 'next/server'
-
 const SERVICE_NAME = 'muwaazaf'
 const MAX_STRING_LENGTH = 1_000
-const SHIP_TIMEOUT_MS = 3_000
+const SHIP_TIMEOUT_MS = 1_500
 const SHIP_WARN_INTERVAL_MS = 60_000
+const MAX_CONSECUTIVE_SHIP_FAILURES = 3
+const SHIP_PAUSE_MS = 5 * 60_000
 
 type LogLevel = 'info' | 'warn' | 'error'
 
@@ -15,6 +15,8 @@ let configCache: ElasticConfig | null | undefined
 let lastShipWarnAt = 0
 let reportedConfigState = false
 let reportedFirstShip = false
+let consecutiveShipFailures = 0
+let shipPausedUntil = 0
 
 function cleanEnvValue(value: string | undefined): string | undefined {
   const trimmed = value?.trim()
@@ -91,49 +93,51 @@ function reportFirstShip(result: Record<string, unknown>) {
   )
 }
 
-function shipToElastic(record: Record<string, unknown>) {
+async function shipToElastic(record: Record<string, unknown>): Promise<void> {
   const config = readElasticConfig()
   reportConfigState(config)
   if (!config) return
 
-  const send = async () => {
-    try {
-      const day = String(record['@timestamp']).slice(0, 10).replace(/-/g, '.')
-      const response = await fetch(`${config.url}/${config.index}-${day}/_doc`, {
-        method: 'POST',
-        headers: {
-          Authorization: `ApiKey ${config.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(record),
-        signal: AbortSignal.timeout(SHIP_TIMEOUT_MS),
-        keepalive: true,
-        cache: 'no-store',
-      })
-      if (!response.ok) {
-        let body = ''
-        try {
-          body = truncate(await response.text())
-        } catch {
-          body = ''
-        }
-        reportFirstShip({ ok: false, status: response.status, body })
-        warnShipFailure(`Elasticsearch responded ${response.status}${body ? `: ${body}` : ''}`)
-        return
-      }
-      reportFirstShip({ ok: true, status: response.status, index: config.index })
-    } catch (error) {
-      reportFirstShip({ ok: false, error: describeError(error) })
-      warnShipFailure(describeError(error))
-    }
-  }
+  if (Date.now() < shipPausedUntil) return
 
   try {
-    after(() => {
-      void send()
+    const day = String(record['@timestamp']).slice(0, 10).replace(/-/g, '.')
+    const response = await fetch(`${config.url}/${config.index}-${day}/_doc`, {
+      method: 'POST',
+      headers: {
+        Authorization: `ApiKey ${config.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(record),
+      signal: AbortSignal.timeout(SHIP_TIMEOUT_MS),
+      cache: 'no-store',
     })
-  } catch {
-    void send()
+    if (!response.ok) {
+      let body = ''
+      try {
+        body = truncate(await response.text())
+      } catch {
+        body = ''
+      }
+      recordShipFailure()
+      reportFirstShip({ ok: false, status: response.status, body })
+      warnShipFailure(`Elasticsearch responded ${response.status}${body ? `: ${body}` : ''}`)
+      return
+    }
+    consecutiveShipFailures = 0
+    reportFirstShip({ ok: true, status: response.status, index: config.index })
+  } catch (error) {
+    recordShipFailure()
+    reportFirstShip({ ok: false, error: describeError(error) })
+    warnShipFailure(describeError(error))
+  }
+}
+
+function recordShipFailure() {
+  consecutiveShipFailures += 1
+  if (consecutiveShipFailures >= MAX_CONSECUTIVE_SHIP_FAILURES) {
+    shipPausedUntil = Date.now() + SHIP_PAUSE_MS
+    consecutiveShipFailures = 0
   }
 }
 
@@ -152,7 +156,11 @@ function warnShipFailure(message: string) {
   )
 }
 
-export function logEvent(level: LogLevel, event: string, fields: LogFields = {}) {
+export async function logEvent(
+  level: LogLevel,
+  event: string,
+  fields: LogFields = {}
+): Promise<void> {
   const record = {
     ...sanitizeFields(fields),
     '@timestamp': new Date().toISOString(),
@@ -168,5 +176,5 @@ export function logEvent(level: LogLevel, event: string, fields: LogFields = {})
   else if (level === 'warn') console.warn(line)
   else console.log(line)
 
-  shipToElastic(record)
+  await shipToElastic(record)
 }

@@ -53,7 +53,7 @@ export const POST = withJsonGuard(
         },
       })
     } catch (error) {
-      logEvent('error', 'export_pdf_failed', { error: describeError(error) })
+      await logEvent('error', 'export_pdf_failed', { error: describeError(error) })
       return apiError('Failed to generate PDF. Please try again.', 500)
     }
   }

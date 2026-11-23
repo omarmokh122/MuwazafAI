@@ -42,7 +42,7 @@ export const POST = withFormGuard(
         const result = await parser.getText()
         parsedText = result.text || ''
       } catch (error) {
-        logEvent('warn', 'parse_cv_pdf_failed', { error: describeError(error) })
+        await logEvent('warn', 'parse_cv_pdf_failed', { error: describeError(error) })
         return apiError(
           'Could not read this PDF. It may be corrupted. Please try a different file.',
           422
@@ -62,7 +62,7 @@ export const POST = withFormGuard(
         const result = await mammoth.extractRawText({ buffer: upload.buffer })
         parsedText = result.value || ''
       } catch (error) {
-        logEvent('warn', 'parse_cv_docx_failed', { error: describeError(error) })
+        await logEvent('warn', 'parse_cv_docx_failed', { error: describeError(error) })
         return apiError(
           'Could not read this Word document. Please ensure it is a valid .docx file.',
           422

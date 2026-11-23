@@ -49,7 +49,7 @@ export async function getLaborLawText(): Promise<string> {
       fs.writeFileSync(TEXT_PATH, text);
       return text;
     } catch (e) {
-      logEvent('warn', 'labor_law_cached_pdf_parse_failed', { error: describeError(e) });
+      await logEvent('warn', 'labor_law_cached_pdf_parse_failed', { error: describeError(e) });
     }
   }
 
@@ -71,13 +71,13 @@ export async function getLaborRightsCategories(): Promise<unknown> {
     try {
       return JSON.parse(cleanJsonString(cached));
     } catch (e) {
-      logEvent('warn', 'labor_law_cached_json_invalid', { error: describeError(e) });
+      await logEvent('warn', 'labor_law_cached_json_invalid', { error: describeError(e) });
       try {
         if (fs.existsSync(JSON_PATH)) {
           fs.unlinkSync(JSON_PATH);
         }
       } catch (unlinkError) {
-        logEvent('warn', 'labor_law_cache_unlink_failed', { error: describeError(unlinkError) });
+        await logEvent('warn', 'labor_law_cache_unlink_failed', { error: describeError(unlinkError) });
       }
     }
   }
@@ -89,7 +89,7 @@ export async function getLaborRightsCategories(): Promise<unknown> {
     try {
       return JSON.parse(cleanJsonString(synced));
     } catch (e) {
-      logEvent('error', 'labor_law_synced_json_invalid', { error: describeError(e) });
+      await logEvent('error', 'labor_law_synced_json_invalid', { error: describeError(e) });
     }
   }
   return { categories: [] };
@@ -97,7 +97,7 @@ export async function getLaborRightsCategories(): Promise<unknown> {
 
 export async function syncLaborLaw(force: boolean = false): Promise<{ synced: boolean; message: string }> {
   ensureDataDir();
-  logEvent('info', 'labor_law_sync_started', { force });
+  await logEvent('info', 'labor_law_sync_started', { force });
   
   try {
     const res = await fetch(PDF_URL, {
@@ -202,7 +202,7 @@ Only return the JSON object, do not wrap in markdown or anything else.`;
     
     return { synced: true, message: 'Successfully downloaded PDF, parsed text, and regenerated structured JSON via Gemini.' };
   } catch (error) {
-    logEvent('error', 'labor_law_sync_failed', { error: describeError(error) });
+    await logEvent('error', 'labor_law_sync_failed', { error: describeError(error) });
     return { synced: false, message: `Sync failed: ${error instanceof Error ? error.message : 'unknown error'}` };
   }
 }

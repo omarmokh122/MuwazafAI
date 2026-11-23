@@ -22,15 +22,15 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      logEvent('info', 'auth_callback_success', { next })
+      await logEvent('info', 'auth_callback_success', { next })
       return applySecurityHeaders(
         NextResponse.redirect(new URL(next, request.url))
       )
     }
 
-    logEvent('warn', 'auth_callback_exchange_failed', { error: error.message })
+    await logEvent('warn', 'auth_callback_exchange_failed', { error: error.message })
   } catch (error) {
-    logEvent('error', 'auth_callback_unexpected_failure', { error: describeError(error) })
+    await logEvent('error', 'auth_callback_unexpected_failure', { error: describeError(error) })
   }
 
   return applySecurityHeaders(
