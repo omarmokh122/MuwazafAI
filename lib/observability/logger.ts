@@ -13,6 +13,8 @@ type ElasticConfig = { url: string; apiKey: string; index: string }
 
 let configCache: ElasticConfig | null | undefined
 let lastShipWarnAt = 0
+let reportedConfigState = false
+let reportedFirstShip = false
 
 function cleanEnvValue(value: string | undefined): string | undefined {
   const trimmed = value?.trim()
@@ -59,8 +61,39 @@ export function describeError(error: unknown): string {
   return String(error)
 }
 
+function reportConfigState(config: ElasticConfig | null) {
+  if (reportedConfigState) return
+  reportedConfigState = true
+  console.log(
+    JSON.stringify({
+      '@timestamp': new Date().toISOString(),
+      service: SERVICE_NAME,
+      level: 'info',
+      event: config ? 'log_ship_config_present' : 'log_ship_disabled',
+      hasUrl: Boolean(cleanEnvValue(process.env.ELASTIC_LOGS_URL)),
+      hasKey: Boolean(cleanEnvValue(process.env.ELASTIC_LOGS_API_KEY)),
+      index: config?.index,
+    })
+  )
+}
+
+function reportFirstShip(result: Record<string, unknown>) {
+  if (reportedFirstShip) return
+  reportedFirstShip = true
+  console.log(
+    JSON.stringify({
+      '@timestamp': new Date().toISOString(),
+      service: SERVICE_NAME,
+      level: result.ok ? 'info' : 'warn',
+      event: 'log_ship_result',
+      ...result,
+    })
+  )
+}
+
 function shipToElastic(record: Record<string, unknown>) {
   const config = readElasticConfig()
+  reportConfigState(config)
   if (!config) return
 
   const send = async () => {
@@ -78,9 +111,19 @@ function shipToElastic(record: Record<string, unknown>) {
         cache: 'no-store',
       })
       if (!response.ok) {
-        warnShipFailure(`Elasticsearch responded ${response.status}`)
+        let body = ''
+        try {
+          body = truncate(await response.text())
+        } catch {
+          body = ''
+        }
+        reportFirstShip({ ok: false, status: response.status, body })
+        warnShipFailure(`Elasticsearch responded ${response.status}${body ? `: ${body}` : ''}`)
+        return
       }
+      reportFirstShip({ ok: true, status: response.status, index: config.index })
     } catch (error) {
+      reportFirstShip({ ok: false, error: describeError(error) })
       warnShipFailure(describeError(error))
     }
   }
